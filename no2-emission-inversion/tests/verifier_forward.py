@@ -74,19 +74,6 @@ def read_queries(data_dir):
 
 
 # ---------------------------------------------------------------- geometry ---
-def _clip(poly, lo, hi, axis):
-    out = []
-    n = len(poly)
-    for i in range(n):
-        a = poly[i]; b = poly[(i + 1) % n]
-        ain = lo <= a[axis] <= hi
-        bin_ = lo <= b[axis] <= hi
-        for edge in ():
-            pass
-        out.append((a, b, ain, bin_))
-    return out
-
-
 def clip_rect(poly, x0, x1, y0, y1):
     def pass_(pts, sel, cut):
         res = []

@@ -221,12 +221,13 @@ def main():
     print(f"representation error: satellite {sigma_repr_sat:.4e} mol m-2, "
           f"station {sigma_repr_sta:.4f} ug m-3", flush=True)
 
-    np.savez_compressed(os.path.join(prvd, "truth_state.npz"),
-                        truth_sat=np.array(truth_sat, dtype=object),
-                        truth_sta=np.array(truth_sta),
-                        repr_sat=np.array(repr_sat, dtype=object),
-                        repr_sta=np.array(repr_sta),
-                        allow_pickle=True)
+    np.savez_compressed(
+        os.path.join(prvd, "truth_state.npz"),
+        truth_sat=np.concatenate(truth_sat),
+        truth_sat_counts=np.array([len(v) for v in truth_sat]),
+        truth_sta=np.array(truth_sta),
+        repr_sat=np.concatenate(repr_sat),
+        repr_sta=np.array(repr_sta))
 
     state = dict(road_f=road_f, fixed_f=fixed_f, road_c=road_c, fixed_c=fixed_c,
                  met=met, blmean=blmean, stations=stations, episodes=episodes,

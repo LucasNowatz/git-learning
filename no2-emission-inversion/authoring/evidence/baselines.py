@@ -75,6 +75,10 @@ def build(variant):
 
 def fit(variant, label):
     t0 = time.time()
+    if variant.get("first_order"):
+        M.vl = lambda a, b: np.zeros_like(a)      # donor-cell upwind
+    if variant.get("dt"):
+        M.DT = float(variant["dt"])
     d, model, blocks = build(variant)
     eps = sorted(blocks)
     import multiprocessing as mp
@@ -184,6 +188,8 @@ VARIANTS = [
     ("no_diurnal_factor", dict(no_diurnal=True)),
     ("grid_convergence_ignored", dict(gamma_ignored=True)),
     ("grid_convergence_sign_flipped", dict(gamma_sign_flip=True)),
+    ("first_order_upwind", dict(first_order=True)),
+    ("coarse_time_step_300s", dict(dt=300.0)),
 ]
 
 if __name__ == "__main__":

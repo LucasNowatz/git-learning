@@ -29,13 +29,15 @@ sensitivity; and evaluate the surface operator through the prescribed
 normalised in-layer vertical shape.
 
 What makes this unforgiving rather than merely long is that the twelve free
-parameters absorb a broken link. A solver that inverts the rotation sign, or
-that uses the NO2 molar mass for the nitrogen-basis field, or that averages
-footprints by nearest cell centre instead of by area, still fits the twelve
-training episodes at a plausible chi-square, because the scale factors, the
-loss time and the background silently compensate. The compensation is
-regime-dependent, so it collapses on the six withheld episodes and on at least
-one of the three wind regimes, which are graded separately.
+parameters absorb a broken link. A solver that skips the wind correction, or
+skips the quality screen, or drops the diurnal emission modulation, or uses the
+NO2 molar mass for the nitrogen-basis field, still fits the twelve training
+episodes at a plausible chi-square, because the scale factors, the loss time and
+the background silently compensate. The compensation is regime-dependent, so it
+collapses on the six withheld episodes and on the individual wind regimes, which
+are graded separately. Each of those broken variants was refitted end to end and
+scored; the measurements are in `authoring/evidence/baseline_results.json` and
+are what the thresholds are calibrated against.
 
 The inference is a twelve-parameter joint estimation with real structural
 trade-offs: emission amplitude against effective loss time, wind speed against

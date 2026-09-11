@@ -1,0 +1,43 @@
+{
+  "label": "oracle",
+  "params": {
+    "emission_scale": [
+      1.69127,
+      0.73128,
+      2.20564,
+      0.56503,
+      1.37825,
+      2.02838
+    ],
+    "lifetime_h": 4.3853,
+    "wind_speed_scale": 1.20532,
+    "wind_rotation_deg": -13.3579,
+    "background": [
+      1.8115128393302272e-05,
+      5.720896213139026e-06,
+      -5.952733015701773e-07
+    ]
+  },
+  "wrmse_sat": 0.24374185504750964,
+  "wrmse_sta": 0.49523457657628595,
+  "regime": {
+    "NE_continental": {
+      "satellite": 0.27848774161737067,
+      "station": 0.48554645877766
+    },
+    "SW_advective": {
+      "satellite": 0.2762789139743705,
+      "station": 0.25592997631594
+    },
+    "S_light_variable": {
+      "satellite": 0.15357065948442106,
+      "station": 0.6591785350733717
+    }
+  },
+  "total_emission_rel_err_max": 0.058434756972345465,
+  "total_emission_rel_err_signed": 0.05843475697234535,
+  "consistency_sat": 0.07135719721250385,
+  "consistency_sta": 0.08591590717096183,
+  "verifier_forward_wrmse_sat": 0.2054978327254928,
+  "verifier_forward_wrmse_sta": 0.4907945511478976
+}
