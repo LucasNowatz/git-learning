@@ -153,9 +153,9 @@ molar mass. All inlets are inside the boundary layer at all reported times.
   `add_offset` and drop `_FillValue` entries **before** applying the QA rule.
 * Accept a retrieval only when `qa_value >= 0.75` (the
   `qa_acceptance_threshold` attribute). Rejected retrievals are cloud-affected
-  and biased; they are not usable by rescaling.
+  and carry a positive bias.
 * Valid retrievals with negative values are genuine noise realisations of a
-  small positive quantity. Retain them. Clipping them biases the inversion.
+  small positive quantity and are part of the accepted set.
 * Retrieval errors are independent between footprints, and station errors are
   independent between records. This is a disclosed simplification.
 * `obs_id` is unique across the whole dataset.
@@ -178,7 +178,7 @@ the query geometry, so a prediction is scored on model error alone. The
 `sigma_measurement` reported for each query is still the measurement term of the
 normalisation defined above.
 
-That representation error applies to a **conservative, second-order or better**
-transport scheme run at a time step of 60 s or less on the 4 km grid. A
-first-order upwind scheme on this grid adds numerical diffusion well above the
-quoted value and will not reproduce the plume structure the data contain.
+That representation error was measured with a conservative, second-order
+transport scheme run at a time step of 60 s or less on the 4 km grid, and its
+scope is limited to that. It does not cover the numerical diffusion of a
+first-order scheme on this grid, which is substantially larger.
