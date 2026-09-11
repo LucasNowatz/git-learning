@@ -111,9 +111,14 @@ predictions; that the withheld satellite and surface observations are predicted
 within frozen error-normalised thresholds; that each of the three wind regimes
 meets its own threshold so a good average cannot hide a failed regime; and that
 the domain-integrated road NOx emission matches the generating value. Thresholds
-were frozen from measured reference performance and from documented baselines
-(unadjusted prior, uncorrected wind, background-only), with a margin that leaves
-every baseline far outside the pass region.
+are not hand-set. Each global gate is the geometric mean of the measured
+reference score and the best score reached by any deliberately broken variant,
+so it sits the same factor above a correct solution as below a broken one; each
+regime gate is that global gate rescaled by the reference score in that regime.
+Twelve broken variants were refitted end to end and scored to fix those numbers,
+and sixteen adversarial outputs were run against the verifier. All of it is
+recorded in authoring/evidence/EVIDENCE.md, including the variants that pass the
+prediction gates and are caught by the inventory gate instead.
 """
 
 [verifier]

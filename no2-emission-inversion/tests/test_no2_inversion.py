@@ -106,17 +106,23 @@ def test_predictions_schema(ctx):
     got = {}
     with open(p, newline="") as fh:
         rd = csv.DictReader(fh)
+        head = {(h or "").strip().lstrip("\ufeff"): h for h in (rd.fieldnames or [])}
         need = {"obs_id", "instrument_type", "predicted_value", "unit"}
-        assert need <= set(h.strip() for h in (rd.fieldnames or [])), \
+        assert need <= set(head), \
             f"header must contain {sorted(need)}, found {rd.fieldnames}"
         for i, row in enumerate(rd):
             if i > 4 * (len(want_sat) + len(want_sta)):
                 pytest.fail("predicted_observations.csv has far too many rows")
-            oid = (row["obs_id"] or "").strip()
+            cell = lambda k: (row.get(head[k]) or "").strip()
+            oid = cell("obs_id")
             assert oid not in got, f"duplicate obs_id {oid!r}"
-            kind = (row["instrument_type"] or "").strip().lower()
-            unit = (row["unit"] or "").strip().lower()
-            val = float(row["predicted_value"])
+            kind = cell("instrument_type").lower()
+            unit = cell("unit").lower()
+            try:
+                val = float(cell("predicted_value"))
+            except ValueError:
+                pytest.fail(f"predicted_value for {oid!r} is not a number: "
+                            f"{cell('predicted_value')!r}")
             assert math.isfinite(val), f"non-finite prediction for {oid!r}"
             if oid in want_sat:
                 assert kind == "satellite", f"{oid!r} declares instrument {kind!r}"

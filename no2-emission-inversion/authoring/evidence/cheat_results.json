@@ -3,7 +3,7 @@
     "reward": 1
   },
   "constant_predictions": {
-    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.812 > 0.6)",
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.812 > 0.874)",
     "reward": 0
   },
   "duplicate_rows": {
@@ -19,7 +19,7 @@
     "reward": 0
   },
   "garbage_nonlinear_parameters": {
-    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 1.781 > 0.6)",
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 1.781 > 0.874)",
     "reward": 0
   },
   "missing_rows": {
@@ -47,7 +47,7 @@
     "reward": 0
   },
   "reported_rotation_sign_flipped": {
-    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.135 > 0.6)",
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.135 > 0.874)",
     "reward": 0
   },
   "scales_pinned_at_bound": {
@@ -59,11 +59,11 @@
     "reward": 0
   },
   "training_mean_predictions": {
-    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.402 > 0.6)",
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.402 > 0.874)",
     "reward": 0
   },
   "zero_predictions": {
-    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 3.692 > 0.6)",
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 3.692 > 0.874)",
     "reward": 0
   }
 }

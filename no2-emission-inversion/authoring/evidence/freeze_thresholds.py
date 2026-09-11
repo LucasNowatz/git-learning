@@ -19,11 +19,24 @@ import numpy as np
 
 ROOT = "/home/user/git-learning/no2-emission-inversion"
 MIN_FACTOR = 1.45
+REGIME_MIN_FACTOR = 1.15
 
-SKILL_MUST_FAIL = ["no_qa_screening", "no_rotation", "no_wind_correction"]
+# Variants whose physics is wrong. first_order_upwind and coarse_time_step_300s
+# are excluded: model_spec.md already tells a solver that a first-order scheme
+# and a time step above 60 s are inadequate on this grid, so the thresholds do
+# not need to be tightened to catch them (both fail anyway on the station gate).
+SKILL_MUST_FAIL = ["no_qa_screening", "no_rotation", "no_wind_correction",
+                   "prior_unadjusted"]
 CONSISTENCY_MUST_FAIL = ["no_diurnal_factor"]
+# Correct physics, coarser numerics, and a footprint approximation that is
+# defensible at this grid spacing: these must stay on the passing side.
+# first_order_upwind is deliberately not listed: model_spec.md states that a
+# first-order scheme on the 4 km grid is inadequate, so it is free to fail
+# either gate.
+# Correct or defensible operators whose predictions must still be recognised as
+# coming from their own reported parameters.
 CONSISTENCY_MUST_PASS = ["coarse_time_step_300s", "nearest_cell_footprint",
-                         "first_order_upwind"]
+                         "grid_convergence_ignored", "grid_convergence_sign_flipped"]
 TOTAL_MARGIN = 2.0
 
 
@@ -43,15 +56,19 @@ def main():
     thr_sat = geo(orc["wrmse_sat"], min(v["wrmse_sat"] for v in fails.values()), "satellite")
     thr_sta = geo(orc["wrmse_sta"], min(v["wrmse_sta"] for v in fails.values()), "station")
 
+    # Regime gates are a safety net against a good average hiding a failed
+    # regime, not a second skill gate. They carry the same relative margin over
+    # the reference as the global gate, rescaled to each regime's own reference
+    # level, and are only required to stay below the failing scores.
     regime = {}
     for reg, v in orc["regime"].items():
-        regime[reg] = dict(
-            satellite=geo(v["satellite"],
-                          min(b["regime"][reg]["satellite"] for b in fails.values()),
-                          f"{reg} satellite"),
-            station=geo(v["station"],
-                        min(b["regime"][reg]["station"] for b in fails.values()),
-                        f"{reg} station"))
+        rs = float(np.round(thr_sat * v["satellite"] / orc["wrmse_sat"], 3))
+        rt = float(np.round(thr_sta * v["station"] / orc["wrmse_sta"], 3))
+        fs = min(b["regime"][reg]["satellite"] for b in fails.values())
+        ft = min(b["regime"][reg]["station"] for b in fails.values())
+        assert fs / rs >= REGIME_MIN_FACTOR, f"{reg} satellite: only {fs/rs:.2f}x below failing"
+        assert ft / rt >= REGIME_MIN_FACTOR, f"{reg} station: only {ft/rt:.2f}x below failing"
+        regime[reg] = dict(satellite=rs, station=rt)
 
     ok = [max(orc["consistency_sat"], orc["consistency_sta"])]
     ok += [max(base[k]["consistency_sat"], base[k]["consistency_sta"])
@@ -64,12 +81,17 @@ def main():
     out = {
         "_comment": ("Frozen by authoring/evidence/freeze_thresholds.py from "
                      "measured reference and baseline scores, before any agent "
-                     "run. Every value is the geometric mean of what the "
+                     "run. Each global gate is the geometric mean of what the "
                      "reference solution achieves and the best score reached by "
-                     "a deliberately broken variant. Do not edit by hand."),
+                     "a deliberately broken variant; each regime gate is the "
+                     "global gate rescaled by the reference score in that "
+                     "regime. Do not edit by hand."),
         "_calibration": {
             "rule": "geometric mean of reference score and best failing score",
             "min_factor_each_side": MIN_FACTOR,
+            "regime_min_factor_below_failing": REGIME_MIN_FACTOR,
+            "regime_rule": ("global threshold rescaled by the reference score in "
+                            "that regime"),
             "reference": {"satellite": round(orc["wrmse_sat"], 4),
                           "station": round(orc["wrmse_sta"], 4),
                           "consistency": [round(orc["consistency_sat"], 4),

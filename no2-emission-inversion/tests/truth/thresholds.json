@@ -1,17 +1,87 @@
 {
-  "_comment": "Frozen before any agent run. See authoring/evidence/baseline_results.json.",
+  "_calibration": {
+    "consistency_must_fail": {
+      "no_diurnal_factor": 2.2763
+    },
+    "consistency_must_pass": {
+      "coarse_time_step_300s": 0.1047,
+      "grid_convergence_ignored": 0.1764,
+      "grid_convergence_sign_flipped": 0.3358,
+      "nearest_cell_footprint": 0.3199
+    },
+    "min_factor_each_side": 1.45,
+    "reference": {
+      "consistency": [
+        0.0714,
+        0.0859
+      ],
+      "satellite": 0.2437,
+      "station": 0.4952,
+      "total_emission_rel_err": 0.0584
+    },
+    "regime_min_factor_below_failing": 1.15,
+    "regime_rule": "global threshold rescaled by the reference score in that regime",
+    "rule": "geometric mean of reference score and best failing score",
+    "skill_must_fail": {
+      "no_qa_screening": {
+        "satellite": 1.1489,
+        "station": 1.1485
+      },
+      "no_rotation": {
+        "satellite": 1.4989,
+        "station": 1.7799
+      },
+      "no_wind_correction": {
+        "satellite": 1.4987,
+        "station": 1.7805
+      },
+      "prior_unadjusted": {
+        "satellite": 1.6745,
+        "station": 2.9092
+      }
+    },
+    "total_emission_margin": 2.0
+  },
+  "_comment": "Frozen by authoring/evidence/freeze_thresholds.py from measured reference and baseline scores, before any agent run. Each global gate is the geometric mean of what the reference solution achieves and the best score reached by a deliberately broken variant; each regime gate is the global gate rescaled by the reference score in that regime. Do not edit by hand.",
   "bounds": {
-    "emission_scale": [0.30, 2.50],
-    "effective_lifetime_s": [3600.0, 28800.0],
-    "wind_speed_scale": [0.70, 1.30],
-    "wind_rotation_deg": [-20.0, 20.0]
+    "effective_lifetime_s": [
+      3600.0,
+      28800.0
+    ],
+    "emission_scale": [
+      0.3,
+      2.5
+    ],
+    "wind_rotation_deg": [
+      -20.0,
+      20.0
+    ],
+    "wind_speed_scale": [
+      0.7,
+      1.3
+    ]
   },
-  "consistency_max": {"satellite": 0.60, "station": 0.60},
-  "skill": {"satellite": 0.45, "station": 0.85},
+  "consistency_max": {
+    "satellite": 0.874,
+    "station": 0.874
+  },
   "regime": {
-    "SW_advective":     {"satellite": 0.50, "station": 0.55},
-    "NE_continental":   {"satellite": 0.50, "station": 0.85},
-    "S_light_variable": {"satellite": 0.35, "station": 1.05}
+    "NE_continental": {
+      "satellite": 0.604,
+      "station": 0.739
+    },
+    "SW_advective": {
+      "satellite": 0.6,
+      "station": 0.39
+    },
+    "S_light_variable": {
+      "satellite": 0.333,
+      "station": 1.004
+    }
   },
-  "total_emission_rel_tol": 0.12
+  "skill": {
+    "satellite": 0.529,
+    "station": 0.754
+  },
+  "total_emission_rel_tol": 0.117
 }

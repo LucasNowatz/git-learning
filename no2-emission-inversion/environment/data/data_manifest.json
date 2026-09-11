@@ -22,8 +22,8 @@
       "sha256": "13258c0226ee3de820f6122006185a6d4e6de8f157b1aef0a88203ebabc01b7d"
     },
     "model_spec.md": {
-      "bytes": 7729,
-      "sha256": "a4fb302c71f5e00e5e8864e721d5ba53445f3ef72c83a28fc440dbc220e1edba"
+      "bytes": 10064,
+      "sha256": "7c8569863c92957d798d698cad6ad0a629bdd3baf0bde9fd8248c0665d6dcb8d"
     },
     "prediction_queries.nc": {
       "bytes": 844006,

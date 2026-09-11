@@ -10,6 +10,23 @@ defined in `domain.nc`. The spatial patterns of `road_prior` and
 `fixed_sources` are exact: the only emission error is the set of per-region
 scale factors defined below.
 
+## 0. What is in `/app/data`
+
+| file | contents |
+| --- | --- |
+| `domain.nc` | the 4 km inference grid: `x`, `y` and their bounds in metres, `cell_area`, `grid_convergence`, `region_id`, `region_name`, `region_support`, and a `crs` variable describing the projection. `x` and `y` are metres east and north of the domain origin; add the `domain_origin_x_proj` / `domain_origin_y_proj` attributes for EPSG:3035 coordinates. |
+| `emissions.nc` | `road_prior(region, y, x)` and `fixed_sources(y, x)` in `kg km-2 h-1` on the two different mass bases of section 3, `road_time_factor(episode)`, `fixed_time_factor(episode)`, `road_diurnal_factor(hour)`, and the molar masses as file attributes. |
+| `meteorology.nc` | `u_east` and `v_north` on `(episode, time, level, ym, xm)`, `blh` and `f_no2` on `(episode, time, ym, xm)`, the 12 km grid `xm`, `ym`, hourly `time(episode, time)`, `level_bounds`, and per-episode `episode_start`, `episode_end`, `analysis_start`, `overpass_time` and `wind_regime`. Attributes carry `horizontal_diffusivity_m2_s` and `vertical_shape_zeta0`. |
+| `swaths/no2_swath_ep??.nc` | one file per observed episode: `obs_id`, `scanline`, `ground_pixel`, `time_utc`, footprint `corner_x`, `corner_y` and centres, packed `no2_column`, `no2_column_uncertainty`, `qa_value` and `vertical_sensitivity`. Only the twelve observed episodes have a file. |
+| `stations.csv` | one row per hourly surface record of the observed episodes: `obs_id`, `station_id`, `episode_id`, `x_m`, `y_m`, `inlet_height_m`, `site_type`, `interval_start_utc`, `interval_end_utc`, `no2_ug_m3`, `sigma_ug_m3`. |
+| `prediction_queries.nc` | every graded query: `sat_*` variables give footprint geometry, time, vertical sensitivity and measurement uncertainty for 4387 satellite queries, `sta_*` variables give position, inlet height, averaging interval and uncertainty for 432 station queries. Measured values are withheld. |
+| `data_manifest.json` | schema version, constants, the training and query episode lists, parameter bounds, the representation-error budget and a SHA-256 for every other file. |
+| `model_spec.md` | this file. |
+
+The six query episodes appear in `meteorology.nc` and in `emissions.nc` exactly
+like the observed ones, so every covariate needed to run the model forward on
+them is available. They simply have no measurements.
+
 ## 1. State variable and governing equation
 
 The state is the vertically integrated NOx amount `C(x, y, t)` in `mol m-2`, on

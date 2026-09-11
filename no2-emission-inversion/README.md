@@ -29,15 +29,26 @@ sensitivity; and evaluate the surface operator through the prescribed
 normalised in-layer vertical shape.
 
 What makes this unforgiving rather than merely long is that the twelve free
-parameters absorb a broken link. A solver that skips the wind correction, or
-skips the quality screen, or drops the diurnal emission modulation, or uses the
-NO2 molar mass for the nitrogen-basis field, still fits the twelve training
-episodes at a plausible chi-square, because the scale factors, the loss time and
-the background silently compensate. The compensation is regime-dependent, so it
-collapses on the six withheld episodes and on the individual wind regimes, which
-are graded separately. Each of those broken variants was refitted end to end and
-scored; the measurements are in `authoring/evidence/baseline_results.json` and
-are what the thresholds are calibrated against.
+parameters absorb a broken link. Every candidate mistake was refitted end to end
+with that one link broken, then scored exactly as an agent would be; the table
+is in `authoring/evidence/EVIDENCE.md`. Dropping the wind correction still fits
+the training episodes at a chi-square per observation of 3.2, and skipping the
+quality screen fits at 11.2, yet both look like an inversion that converged,
+because the scale factors, the loss time and the background silently compensate.
+The compensation is regime-dependent, so it collapses on the six withheld
+episodes: held-out satellite error rises from 0.24 for the reference solution to
+1.15 without quality screening and 1.50 without the wind correction, against a
+frozen threshold of 0.53.
+
+Not every link is equally sharp, and the evidence says so. Dropping the diurnal
+emission modulation is caught by the consistency and station gates. Using the
+NO2 molar mass for the nitrogen-basis field survives the prediction gates and is
+caught by the exported-inventory gate instead. Sampling footprints at the
+nearest cell centre instead of by area overlap is caught only by the
+light-and-variable wind regime, where gradients are sharpest. Ignoring the grid
+convergence angle, which spans about six degrees, is largely absorbed by the
+free rotation parameter and passes. Clipping negative retrievals to zero turns
+out to be harmless at this signal level.
 
 The inference is a twelve-parameter joint estimation with real structural
 trade-offs: emission amplitude against effective loss time, wind speed against
