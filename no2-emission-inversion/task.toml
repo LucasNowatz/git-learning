@@ -1,0 +1,135 @@
+schema_version = "1.4"
+artifacts = [
+    "/app/result.json",
+    "/app/posterior.nc",
+    "/app/predicted_observations.csv",
+]
+
+[task]
+name = "afterquery/no2-emission-inversion"
+description = "Infer road NOx emission scale factors, an effective loss time, wind corrections and an inflow background from synthetic NO2 columns and surface records, and predict withheld episodes."
+authors = [{ name = "Daniel Ribeiro", email = "thomasli921215@gmail.com" }]
+keywords = [
+    "atmospheric chemistry",
+    "emission inversion",
+    "satellite remote sensing",
+    "NO2",
+    "inverse modeling",
+    "atmospheric transport",
+]
+
+[metadata]
+author_name = "Daniel Ribeiro"
+author_email = "thomasli921215@gmail.com"
+author_organization = "FILL IN: your university, institute, lab or employer, or exactly \"Independent Researcher\""
+author_profile = "FILL IN: Google Scholar, personal site or LinkedIn URL"
+research_advisor = ""
+referred_by = ""
+conflicts_of_interest = "None"
+domain = "earth-sciences"
+field = "atmospheric-sciences"
+subfield = "satellite atmospheric remote sensing and emission inverse modeling"
+category = "Science"
+subcategory = "Atmospheric & Climate Sciences"
+tags = [
+    "emission-inversion",
+    "no2",
+    "tropospheric-chemistry",
+    "satellite-remote-sensing",
+    "atmospheric-transport",
+    "inverse-problems",
+    "observation-operator",
+]
+expert_time_estimate_hours = 14
+relevant_experience = "FILL IN: your own background in satellite trace-gas retrievals and/or emission inverse modeling, naming the products, models and studies you have worked on."
+difficulty_explanation = """
+The data are synthetic and disclosed as such. They were produced by a seeded
+generator that is implemented independently of the reference solution, on a 2 km
+grid, and sampled onto a 4 km inference grid; the latent parameters were fixed
+before any inversion was attempted, and the representation error between the two
+grids is measured and published so that no fair solution is penalised for
+discretisation.
+
+The task is hard because a correct answer requires a long chain of dependent
+modelling decisions, every one of which is stated in the supplied specification
+but none of which is the default an agent reaches for. A solver must decode
+packed satellite values and apply the quality rule before screening, keep valid
+negative retrievals, convert two emission fields that are reported on different
+mass bases (NO2-equivalent and nitrogen) with their own molar masses, build the
+boundary-layer mean wind on the meteorological grid before interpolating,
+compose the unknown wind rotation with the spatially varying grid convergence in
+the correct sense, integrate a conservative advection-diffusion-loss equation
+with an inflow background used as both initial and boundary condition, apply an
+area-weighted polygon footprint operator with a per-pixel vertical sensitivity,
+and apply a normalised in-layer vertical shape for the surface operator. A
+single wrong link in that chain still fits the training episodes tolerably,
+because the twelve free parameters absorb the error, and then fails on the
+withheld episodes and on at least one wind regime.
+
+The inference itself is a twelve-parameter joint estimation in which emission
+amplitude trades against loss time and against inflow background, and wind speed
+trades against loss time, so the parameters are only separated by using several
+distinct wind regimes together. A solver also has to notice that individual
+region factors are less well constrained than their total, which is the quantity
+graded. Time on task for a domain expert is dominated by writing and validating
+the forward operator, not by the optimisation.
+"""
+solution_explanation = """
+For fixed loss time and wind corrections, the stated transport model is linear
+in the six road scale factors and in the three background coefficients. The
+reference solution integrates ten basis states per episode (one for the
+prescribed non-road sources, six for the road groups, three for a corner
+parametrisation of the background field), assembles the resulting design matrix
+against the accepted observations weighted by the total error, and solves the
+inner problem as a bounded linear least squares. Only the three nonlinear
+parameters are searched: a coarse grid over loss time, wind speed multiplier and
+rotation on one episode per wind regime, then Nelder-Mead on that subset, then a
+final Nelder-Mead refinement over all twelve training episodes. Transport uses a
+flux-form finite-volume scheme with a van Leer limited reconstruction at a 60 s
+time step, first order at boundary faces, with the background field held in the
+ghost cells and zero diffusive flux across the boundary. The fitted parameters
+are then propagated through the six withheld episodes to produce the graded
+predictions. Nothing in the solution reads the generator, its seed or the sealed
+evaluation values.
+"""
+verification_explanation = """
+Ground truth comes from the generator in authoring/provenance, which is a
+separate implementation from the reference solution, runs on a finer grid, and
+was executed once with latent parameters chosen before any inversion. Its
+withheld observation values and the latent emission totals are baked into the
+verifier image and never appear in the environment.
+
+The verifier applies six mandatory gates and awards reward 1 only when all pass.
+It checks file schemas, units, dimensions and query coverage; that the reported
+parameters lie inside the published bounds and that the background field is
+non-negative across the domain; that the exported flux fields and the reported
+episode totals follow exactly from the reported scale factors, which is where a
+wrong emission mass basis is caught; that an independent forward recomputation
+of the submitted parameters, written with a different discretisation (Strang
+directional splitting rather than an unsplit update), reproduces the submitted
+predictions; that the withheld satellite and surface observations are predicted
+within frozen error-normalised thresholds; that each of the three wind regimes
+meets its own threshold so a good average cannot hide a failed regime; and that
+the domain-integrated road NOx emission matches the generating value. Thresholds
+were frozen from measured reference performance and from documented baselines
+(unadjusted prior, uncorrected wind, background-only), with a margin that leaves
+every baseline far outside the pass region.
+"""
+
+[verifier]
+timeout_sec = 3600.0
+environment_mode = "separate"
+
+[verifier.environment]
+network_mode = "no-network"
+
+[agent]
+timeout_sec = 28800.0
+
+[environment]
+build_timeout_sec = 900.0
+cpus = 4
+memory_mb = 8192
+storage_mb = 20480
+gpus = 0
+network_mode = "public"

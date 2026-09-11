@@ -1,0 +1,69 @@
+{
+  "_reference_solution": {
+    "reward": 1
+  },
+  "constant_predictions": {
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.812 > 0.6)",
+    "reward": 0
+  },
+  "duplicate_rows": {
+    "rejected_because": "E   AssertionError: duplicate obs_id 'SAT-E09-00000'",
+    "reward": 0
+  },
+  "emission_scale_doubled": {
+    "rejected_because": "E   AssertionError: corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relative deviation 3.235e-01); chec",
+    "reward": 0
+  },
+  "foreign_obs_ids": {
+    "rejected_because": "E   Failed: unknown obs_id 'SAT-E09-00000-X' in predicted_observations.csv",
+    "reward": 0
+  },
+  "garbage_nonlinear_parameters": {
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 1.781 > 0.6)",
+    "reward": 0
+  },
+  "missing_rows": {
+    "rejected_because": "E   AssertionError: 50 query ids have no prediction, e.g. ['STA-E17-ST04-4', 'STA-E17-ST04-5', 'STA-E17-ST05-0']",
+    "reward": 0
+  },
+  "nan_predictions": {
+    "rejected_because": "E   AssertionError: non-finite prediction for 'SAT-E09-00000'",
+    "reward": 0
+  },
+  "negative_background_field": {
+    "rejected_because": "E   AssertionError: the background field is negative somewhere in the domain: corners [np.float64(1e-06), np.float64(-7e-06), np.float64(4e-06), np.float64(-4e-",
+    "reward": 0
+  },
+  "no_posterior_file": {
+    "rejected_because": "E   AssertionError: posterior.nc missing or empty",
+    "reward": 0
+  },
+  "nothing_written": {
+    "rejected_because": "E   KeyError: 'params'",
+    "reward": 0
+  },
+  "posterior_on_wrong_mass_basis": {
+    "rejected_because": "E   AssertionError: corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relative deviation 6.955e-01); chec",
+    "reward": 0
+  },
+  "reported_rotation_sign_flipped": {
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.135 > 0.6)",
+    "reward": 0
+  },
+  "scales_pinned_at_bound": {
+    "rejected_because": "E   AssertionError: corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relative deviation 3.438e-01); chec",
+    "reward": 0
+  },
+  "totals_missing_diurnal_factor": {
+    "rejected_because": "E   AssertionError: integrated_road_mol_s is inconsistent with the reported scale factors (worst relative deviation 2.864e-01); it must be the domain integral o",
+    "reward": 0
+  },
+  "training_mean_predictions": {
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.402 > 0.6)",
+    "reward": 0
+  },
+  "zero_predictions": {
+    "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 3.692 > 0.6)",
+    "reward": 0
+  }
+}
