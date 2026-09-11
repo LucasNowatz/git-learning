@@ -9,7 +9,7 @@ cd /tests || exit 0
 
 python -m pytest test_no2_inversion.py \
     -p no:cacheprovider \
-    --ctrf /logs/verifier/ctrf-report.json \
+    --ctrf /logs/verifier/ctrf.json \
     -rA --tb=short > /logs/verifier/pytest.log 2>&1
 status=$?
 
