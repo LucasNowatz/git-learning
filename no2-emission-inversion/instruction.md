@@ -46,16 +46,16 @@ The inferred parameter set:
 
 | key | meaning |
 | --- | --- |
-| `schema_version` | string |
+| `schema_version` | string, `"1.0"` |
 | `region_ids` | the six region identifiers from `domain.nc` |
 | `emission_scale` | six scale factors, ordered to match `region_ids` |
 | `reference_loss_time_s` | seconds |
 | `loss_saturation_column` | `mol m-2` |
-| `loss_saturation_units` | string |
+| `loss_saturation_units` | the string `mol m-2` |
 | `wind_speed_scale` | dimensionless |
 | `wind_rotation_deg` | degrees, sign as defined in the specification |
 | `background_coefficients` | `[b0, bx, by]` in `mol m-2` |
-| `background_units` | string |
+| `background_units` | the string `mol m-2` |
 | `fixed_source_scale` | dimensionless |
 | `vertical_shape_zeta0` | dimensionless |
 | `integrated_road_mol_s` | mapping from episode id (`"0"` to `"17"`) to the domain-integrated corrected road NOx emission rate at that episode's reference time, in `mol s-1` |
@@ -67,7 +67,8 @@ at that instant.
 ### `/app/posterior.nc`
 
 The inferred inventory on the inference grid of `domain.nc`: `region_id`, `x`,
-`y` with cell bounds, `corrected_road_flux` with dimensions `(region, y, x)`
+`y`, their cell bounds `x_bnds` and `y_bnds` with dimensions `(x, nv)` and
+`(y, nv)`, `corrected_road_flux` with dimensions `(region, y, x)`
 and `total_source_flux` with dimensions `(y, x)`, both in `mol m-2 s-1` and
 both at the base period, that is with all time factors set to one.
 `corrected_road_flux` is the supplied prior converted into those units and
@@ -99,8 +100,7 @@ Predictive skill is the root mean square of
 specification defines it. The withheld values are the noise-free model truth at
 the query geometry. The per-query `sat_uncertainty` and `sta_uncertainty` in
 `prediction_queries.nc` are the measurement terms of that normalisation.
-Satellite and station scores are graded separately, each of the three wind
-regimes is graded against its own threshold, and the domain-integrated road
-emission is compared against the value used to generate the data.
+Satellite and station scores are graded separately, and each of the three
+wind regimes is graded against its own threshold.
 
 You have 28800 seconds to complete this task. Do not cheat by using online solutions or hints specific to this task.

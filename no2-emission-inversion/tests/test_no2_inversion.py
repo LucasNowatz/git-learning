@@ -59,6 +59,11 @@ def test_result_json_schema(ctx):
         assert np.isfinite(float(r[k])), f"{k} must be finite"
     bg = np.asarray(r["background_coefficients"], dtype=float)
     assert bg.shape == (3,) and np.all(np.isfinite(bg))
+    assert str(r.get("schema_version", "")).strip() == "1.0", \
+        f"schema_version must be the string \"1.0\", found {r.get('schema_version')!r}"
+    for k in ("background_units", "loss_saturation_units"):
+        u = str(r.get(k, "")).replace("^", "").strip()
+        assert u in ("mol m-2", "mol/m2"), f"{k} must be 'mol m-2', found {r.get(k)!r}"
     tot = r["integrated_road_mol_s"]
     assert isinstance(tot, dict), "integrated_road_mol_s must be a mapping"
     keys = {int(k) for k in tot}
@@ -97,6 +102,14 @@ def test_posterior_schema(ctx):
         y = np.asarray(ds["y"][:], dtype=float)
         assert np.allclose(x, ctx["I"]["x"], atol=1.0), "posterior x axis mismatch"
         assert np.allclose(y, ctx["I"]["y"], atol=1.0), "posterior y axis mismatch"
+        for v, axis in (("x_bnds", x), ("y_bnds", y)):
+            assert v in ds.variables, f"posterior.nc is missing cell bounds {v!r}"
+            b = np.asarray(ds[v][:], dtype=float)
+            assert b.shape == (len(axis), 2), f"{v} has shape {b.shape}, expected ({len(axis)}, 2)"
+            assert np.all(np.isfinite(b))
+            assert np.allclose(b.min(axis=1), axis - 2000.0, atol=1.0) and \
+                np.allclose(b.max(axis=1), axis + 2000.0, atol=1.0), \
+                f"{v} does not bracket the cell centres of the 4 km grid"
         for v in ("corrected_road_flux", "total_source_flux"):
             u = getattr(ds[v], "units", "").replace("^", "").strip()
             assert u in ("mol m-2 s-1", "mol/m2/s"), f"{v} declares units {u!r}"

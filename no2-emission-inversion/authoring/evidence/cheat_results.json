@@ -2,6 +2,10 @@
   "_reference_solution": {
     "reward": 1
   },
+  "background_units_wrong": {
+    "rejected_because": "E   AssertionError: background_units must be 'mol m-2', found 'molecules cm-2'",
+    "reward": 0
+  },
   "constant_predictions": {
     "rejected_because": "E   AssertionError: submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalised RMS 2.704 > 0.556)",
     "reward": 0
@@ -47,11 +51,15 @@
     "reward": 0
   },
   "nothing_written": {
-    "rejected_because": "E   KeyError: 'params'",
+    "rejected_because": "E   AssertionError: result.json missing or empty",
     "reward": 0
   },
   "posterior_on_wrong_mass_basis": {
     "rejected_because": "E   AssertionError: corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relative deviation 6.955e-01); chec",
+    "reward": 0
+  },
+  "posterior_without_cell_bounds": {
+    "rejected_because": "E   AssertionError: posterior.nc is missing cell bounds 'x_bnds'",
     "reward": 0
   },
   "reported_rotation_sign_flipped": {
@@ -60,6 +68,10 @@
   },
   "scales_pinned_at_bound": {
     "rejected_because": "E   AssertionError: corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relative deviation 3.376e-01); chec",
+    "reward": 0
+  },
+  "schema_version_missing": {
+    "rejected_because": "E   AssertionError: schema_version must be the string \"1.0\", found None",
     "reward": 0
   },
   "totals_missing_diurnal_factor": {

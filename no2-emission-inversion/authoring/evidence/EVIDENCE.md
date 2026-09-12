@@ -73,6 +73,7 @@ Each entry is the laziest output that might satisfy a weak verifier.
 
 | attempt | reward | rejected by |
 | --- | --- | --- |
+| background_units_wrong | 0 | background_units must be 'mol m-2', found 'molecules cm-2' |
 | constant_predictions | 0 | submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalis |
 | duplicate_rows | 0 | duplicate obs_id 'SAT-E09-00000' |
 | emission_scale_doubled | 0 | corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relat |
@@ -84,10 +85,12 @@ Each entry is the laziest output that might satisfy a weak verifier.
 | nan_predictions | 0 | non-finite prediction for 'SAT-E09-00000' |
 | negative_background_field | 0 | the background field is negative somewhere in the domain: corners [np.float64(1e-06), np.float64(-7e-06), np.f |
 | no_posterior_file | 0 | posterior.nc missing or empty |
-| nothing_written | 0 | E   KeyError: 'params' |
+| nothing_written | 0 | result.json missing or empty |
 | posterior_on_wrong_mass_basis | 0 | corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relat |
+| posterior_without_cell_bounds | 0 | posterior.nc is missing cell bounds 'x_bnds' |
 | reported_rotation_sign_flipped | 0 | submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalis |
 | scales_pinned_at_bound | 0 | corrected_road_flux does not equal emission_scale times the supplied prior converted to mol m-2 s-1 (max relat |
+| schema_version_missing | 0 | schema_version must be the string "1.0", found None |
 | totals_missing_diurnal_factor | 0 | integrated_road_mol_s is inconsistent with the reported scale factors (worst relative deviation 2.944e-01); it |
 | training_mean_predictions | 0 | submitted satellite predictions disagree with an independent forward run of the submitted parameters (normalis |
 | vertical_shape_reported_as_default | 0 | submitted station predictions disagree with an independent forward run of the submitted parameters (normalised |

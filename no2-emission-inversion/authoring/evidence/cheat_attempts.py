@@ -45,12 +45,12 @@ def install(result=None, posterior=None, predictions=None, base=GOOD):
 def run():
     p = subprocess.run(["bash", "/tests/test.sh"], capture_output=True, text=True)
     reward = open("/logs/verifier/reward.txt").read().strip()
-    first = ""
-    for line in p.stdout.splitlines():
-        if line.startswith("E  ") or "AssertionError" in line or line.startswith("FAILED"):
-            first = line.strip()[:160]
-            break
-    return reward, first
+    lines = [l.strip() for l in p.stdout.splitlines() if l.startswith("E  ")]
+    # prefer the gate's own message over the downstream KeyError that follows
+    # when the fixture chain is broken
+    first = next((l for l in lines if "AssertionError" in l or "Failed:" in l),
+                 lines[0] if lines else "")
+    return reward, first[:160]
 
 
 # --------------------------------------------------------------- attempts ---
@@ -126,6 +126,30 @@ def zeta0_default(r):
     return r
 
 
+def schema_version_missing(r):
+    r.pop("schema_version", None)
+    return r
+
+
+def units_wrong_string(r):
+    r["background_units"] = "molecules cm-2"
+    return r
+
+
+def drop_cell_bounds(path):
+    with Dataset(path) as src, Dataset(path + ".tmp", "w") as dst:
+        for name, dim in src.dimensions.items():
+            dst.createDimension(name, len(dim))
+        for name, var in src.variables.items():
+            if name in ("x_bnds", "y_bnds"):
+                continue
+            v = dst.createVariable(name, var.dtype, var.dimensions)
+            v[:] = var[:]
+            for a in var.ncattrs():
+                v.setncattr(a, var.getncattr(a))
+    os.replace(path + ".tmp", path)
+
+
 def loss_time_out_of_range(r):
     r["reference_loss_time_s"] = 900.0
     return r
@@ -188,6 +212,9 @@ ATTEMPTS = [
     ("fixed_scale_reported_as_one", dict(result=fixed_scale_unity)),
     ("vertical_shape_reported_as_default", dict(result=zeta0_default)),
     ("loss_time_outside_bounds", dict(result=loss_time_out_of_range)),
+    ("schema_version_missing", dict(result=schema_version_missing)),
+    ("background_units_wrong", dict(result=units_wrong_string)),
+    ("posterior_without_cell_bounds", dict(posterior=drop_cell_bounds)),
 ]
 
 if __name__ == "__main__":
