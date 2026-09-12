@@ -1,56 +1,109 @@
 {
   "_calibration": {
-    "consistency_must_fail": {
-      "no_diurnal_factor": 2.2763
-    },
-    "consistency_must_pass": {
-      "coarse_time_step_300s": 0.1047,
-      "grid_convergence_ignored": 0.1764,
-      "grid_convergence_sign_flipped": 0.3358,
-      "nearest_cell_footprint": 0.3199
-    },
-    "min_factor_each_side": 1.45,
-    "reference": {
-      "consistency": [
-        0.0714,
-        0.0859
-      ],
-      "satellite": 0.2437,
-      "station": 0.4952,
-      "total_emission_rel_err": 0.0584
-    },
-    "regime_min_factor_below_failing": 1.15,
-    "regime_rule": "global threshold rescaled by the reference score in that regime",
-    "rule": "geometric mean of reference score and best failing score",
-    "skill_must_fail": {
-      "no_qa_screening": {
-        "satellite": 1.1489,
-        "station": 1.1485
+    "emission_total_gate": "omitted: the absolute road total is not identifiable from the public data",
+    "known_passing": {
+      "fixed_sources_unscaled": {
+        "satellite": 0.3149,
+        "station": 0.5791
       },
-      "no_rotation": {
-        "satellite": 1.4989,
-        "station": 1.7799
-      },
-      "no_wind_correction": {
-        "satellite": 1.4987,
-        "station": 1.7805
-      },
-      "prior_unadjusted": {
-        "satellite": 1.6745,
-        "station": 2.9092
+      "vertical_shape_assumed": {
+        "satellite": 0.3695,
+        "station": 0.629
       }
     },
-    "total_emission_margin": 2.0
+    "margins": {
+      "consistency": 5.5,
+      "satellite": 1.75,
+      "station": 1.45
+    },
+    "must_fail": {
+      "first_order_loss": {
+        "rejected_by": [
+          "SW_advective regime",
+          "S_light_variable regime"
+        ],
+        "satellite": 0.4946,
+        "station": 0.7394
+      },
+      "no_artefact_screening": {
+        "rejected_by": [
+          "NE_continental regime",
+          "SW_advective regime",
+          "S_light_variable regime",
+          "satellite skill",
+          "station skill"
+        ],
+        "satellite": 0.9293,
+        "station": 0.9196
+      },
+      "no_wind_correction": {
+        "rejected_by": [
+          "NE_continental regime",
+          "SW_advective regime",
+          "S_light_variable regime",
+          "satellite skill",
+          "station skill"
+        ],
+        "satellite": 1.7013,
+        "station": 1.6673
+      },
+      "prior_unadjusted": {
+        "rejected_by": [
+          "NE_continental regime",
+          "SW_advective regime",
+          "S_light_variable regime",
+          "satellite skill",
+          "station skill"
+        ],
+        "satellite": 1.0583,
+        "station": 1.5783
+      }
+    },
+    "reference": {
+      "consistency": [
+        0.0943,
+        0.1011
+      ],
+      "regime": {
+        "NE_continental": {
+          "satellite": 0.3715,
+          "station": 0.633
+        },
+        "SW_advective": {
+          "satellite": 0.2707,
+          "station": 0.4706
+        },
+        "S_light_variable": {
+          "satellite": 0.2611,
+          "station": 0.5116
+        }
+      },
+      "satellite": 0.3049,
+      "station": 0.5428
+    },
+    "rule": "fixed margin above the reference score, validated against broken variants"
   },
-  "_comment": "Frozen by authoring/evidence/freeze_thresholds.py from measured reference and baseline scores, before any agent run. Each global gate is the geometric mean of what the reference solution achieves and the best score reached by a deliberately broken variant; each regime gate is the global gate rescaled by the reference score in that regime. Do not edit by hand.",
+  "_comment": "Frozen by authoring/evidence/freeze_thresholds.py from measured reference performance, before any agent run. Each gate is a fixed margin above what the reference solution achieves, validated against the broken variants in EVIDENCE.md. Do not edit by hand.",
   "bounds": {
-    "effective_lifetime_s": [
-      3600.0,
-      28800.0
-    ],
     "emission_scale": [
       0.3,
       2.5
+    ],
+    "fixed_source_scale": [
+      0.4,
+      2.2
+    ],
+    "loss_saturation_column": [
+      1e-05,
+      0.001
+    ],
+    "reference_loss_time_s": [
+      1800.0,
+      28800.0
+    ],
+    "vertical_shape_zeta0": [
+      0.12,
+      0.8
     ],
     "wind_rotation_deg": [
       -20.0,
@@ -62,26 +115,25 @@
     ]
   },
   "consistency_max": {
-    "satellite": 0.874,
-    "station": 0.874
+    "satellite": 0.556,
+    "station": 0.556
   },
   "regime": {
     "NE_continental": {
-      "satellite": 0.604,
-      "station": 0.739
+      "satellite": 0.65,
+      "station": 0.918
     },
     "SW_advective": {
-      "satellite": 0.6,
-      "station": 0.39
+      "satellite": 0.474,
+      "station": 0.682
     },
     "S_light_variable": {
-      "satellite": 0.333,
-      "station": 1.004
+      "satellite": 0.457,
+      "station": 0.742
     }
   },
   "skill": {
-    "satellite": 0.529,
-    "station": 0.754
-  },
-  "total_emission_rel_tol": 0.117
+    "satellite": 0.534,
+    "station": 0.787
+  }
 }

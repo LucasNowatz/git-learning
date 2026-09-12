@@ -16,7 +16,7 @@ scale factors defined below.
 | --- | --- |
 | `domain.nc` | the 4 km inference grid: `x`, `y` and their bounds in metres, `cell_area`, `grid_convergence`, `region_id`, `region_name`, `region_support`, and a `crs` variable describing the projection. `x` and `y` are metres east and north of the domain origin; add the `domain_origin_x_proj` / `domain_origin_y_proj` attributes for EPSG:3035 coordinates. |
 | `emissions.nc` | `road_prior(region, y, x)` and `fixed_sources(y, x)` in `kg km-2 h-1` on the two different mass bases of section 3, `road_time_factor(episode)`, `fixed_time_factor(episode)`, `road_diurnal_factor(hour)`, and the molar masses as file attributes. |
-| `meteorology.nc` | `u_east` and `v_north` on `(episode, time, level, ym, xm)`, `blh` and `f_no2` on `(episode, time, ym, xm)`, the 12 km grid `xm`, `ym`, hourly `time(episode, time)`, `level_bounds`, and per-episode `episode_start`, `episode_end`, `analysis_start`, `overpass_time` and `wind_regime`. Attributes carry `horizontal_diffusivity_m2_s` and `vertical_shape_zeta0`. |
+| `meteorology.nc` | `u_east` and `v_north` on `(episode, time, level, ym, xm)`, `blh`, `f_no2` and `photolysis_factor` on `(episode, time, ym, xm)`, the 12 km grid `xm`, `ym`, hourly `time(episode, time)`, `level_bounds`, and per-episode `episode_start`, `episode_end`, `analysis_start`, `overpass_time` and `wind_regime`. The `horizontal_diffusivity_m2_s` attribute carries `K`. |
 | `swaths/no2_swath_ep??.nc` | one file per observed episode: `obs_id`, `scanline`, `ground_pixel`, `time_utc`, footprint `corner_x`, `corner_y` and centres, packed `no2_column`, `no2_column_uncertainty`, `qa_value` and `vertical_sensitivity`. Only the twelve observed episodes have a file. |
 | `stations.csv` | one row per hourly surface record of the observed episodes: `obs_id`, `station_id`, `episode_id`, `x_m`, `y_m`, `inlet_height_m`, `site_type`, `interval_start_utc`, `interval_end_utc`, `no2_ug_m3`, `sigma_ug_m3`. |
 | `prediction_queries.nc` | every graded query: `sat_*` variables give footprint geometry, time, vertical sensitivity and measurement uncertainty for 4387 satellite queries, `sta_*` variables give position, inlet height, averaging interval and uncertainty for 432 station queries. Measured values are withheld. |
@@ -32,14 +32,31 @@ them is available. They simply have no measurements.
 The state is the vertically integrated NOx amount `C(x, y, t)` in `mol m-2`, on
 the projected inference grid of `domain.nc`.
 
-    dC/dt + div(u C) = div(K grad C) + E - C / tau
+    dC/dt + div(u C) = div(K grad C) + E - L(C)
 
 * `K` is the prescribed horizontal eddy diffusivity, constant, given by the
   `horizontal_diffusivity_m2_s` attribute of `meteorology.nc`.
-* `tau` is a single effective NOx loss time, shared by the whole domain and all
-  episodes. It is **not** an NO2 photochemical lifetime; it is the bulk loss
-  time of the reduced model.
 * `E` is the total NOx emission flux in `mol m-2 s-1`, defined in section 3.
+* `L(C)` is the chemical sink. It is **not** first order. The oxidant that
+  removes NOx is itself suppressed as NOx rises, so the sink saturates:
+
+      L(C) = C * P(x, y, t) / ( tau_0 * (1 + C / C_ref) )
+
+  `P` is the prescribed dimensionless photolysis proxy `photolysis_factor` in
+  `meteorology.nc`, which carries the diurnal and seasonal cycle of the
+  oxidant supply and has a night-time floor. `tau_0` is the loss time in the
+  low-NOx limit at `P = 1`, and `C_ref` is the column at which the effective
+  loss rate is halved. Both are unknown and shared by the whole domain and
+  every episode.
+
+  Because the sink is nonlinear in `C`, the model does not superpose: the
+  column produced by two sources together is not the sum of the columns each
+  produces alone, and the inflow background changes the lifetime of the
+  emitted plumes.
+
+  The reference evaluation evaluates the loss coefficient at the current column
+  and applies it as an exponential update over the step. Any consistent
+  treatment that converges as the step shrinks is acceptable.
 
 Episodes are independent. Each is integrated from `episode_start` to
 `episode_end` (`meteorology.nc`). No graded observation falls before
@@ -112,10 +129,13 @@ The total emission at time `t` in episode `e` is
     E = fixed_time_factor[e] * fixed_flux
       + road_time_factor[e] * d(t) * sum_r s_r * road_flux_r
 
-where `s_r` are the six unknown non-negative region scale factors and `d(t)` is
+where `s_r` are the six unknown non-negative region scale factors, `d(t)` is
 `road_diurnal_factor` evaluated at the UTC hour of `t`, interpolated linearly
-between whole-hour nodes and wrapped cyclically. `fixed_sources` is prescribed
-and is never scaled.
+between whole-hour nodes and wrapped cyclically, and `fixed_time_factor[e]` is
+prescribed. The reported non-road inventory carries its own unknown constant
+error, so `fixed_flux` above is `fixed_source_scale` times the converted
+`fixed_sources` field, with one `fixed_source_scale` shared by the whole domain
+and every episode. Its spatial pattern is exact.
 
 ## 4. Vertical shape and observation operators
 
@@ -125,8 +145,8 @@ The prescribed normalised vertical shape inside the boundary layer is
     phi(zeta) = exp(-zeta / zeta0) / (zeta0 * (1 - exp(-1 / zeta0)))   for 0 <= zeta <= 1
     phi(zeta) = 0                                                       otherwise
 
-with `zeta0` given by the `vertical_shape_zeta0` attribute of `meteorology.nc`.
-`phi` integrates to one over `zeta` in `[0, 1]`, so `g` integrates to one over
+where `zeta0` is **unknown** and shared by every site and episode. `phi`
+integrates to one over `zeta` in `[0, 1]`, so `g` integrates to one over
 height. The NO2 number density is `f * C * g`, with `f` the prescribed NO2/NOx
 molar fraction `f_no2`, interpolated like the other meteorological fields.
 
@@ -159,6 +179,14 @@ molar mass. All inlets are inside the boundary layer at all reported times.
 * Retrieval errors are independent between footprints, and station errors are
   independent between records. This is a disclosed simplification.
 * `obs_id` is unique across the whole dataset.
+* `qa_value` screens for cloud and retrieval failure. It is not a general
+  artefact detector, and the reported `no2_column_uncertainty` covers random
+  retrieval noise only. Like every long-lived ultraviolet imager, this
+  instrument is subject to detector degradation that develops during the
+  record and affects specific across-track positions; the product does not
+  flag it. Establishing which retrievals are fit to use is part of the
+  analysis. `scanline` and `ground_pixel` give the along-track and across-track
+  index of every footprint.
 
 ## 6. Error budget
 
@@ -167,11 +195,20 @@ Total error for an observation is
     sigma_total^2 = sigma_measurement^2 + sigma_representation^2
 
 `sigma_measurement` is the per-observation uncertainty in the swath files,
-`stations.csv` and `prediction_queries.nc`. `sigma_representation` is given in
-`data_manifest.json` under `representation_error`, separately for each
-instrument. It was measured as the root-mean-square difference between the
-generating model and the same physical state evaluated on the 4 km inference
-grid.
+`stations.csv` and `prediction_queries.nc`. It already carries both a floor and
+a term proportional to the signal.
+
+`sigma_representation` is given in `data_manifest.json` under
+`representation_error` as a floor and a relative coefficient, separately for
+each instrument:
+
+    sigma_representation^2 = floor^2 + (relative * value)^2
+
+`value` is the reported observation when fitting, and the withheld value when
+grading, so the grading normalisation cannot be altered by the size of a
+submitted prediction. The coefficients were measured by fitting that form to
+the difference between the generating model and the same physical state
+evaluated on the 4 km inference grid.
 
 The withheld values used for grading are noise-free model truth evaluated at
 the query geometry, so a prediction is scored on model error alone. The

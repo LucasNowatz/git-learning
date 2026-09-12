@@ -6,7 +6,7 @@ tests/truth/ carries.
 """
 import numpy as np
 
-MASTER_SEED = 20260911
+MASTER_SEED = 20260912
 
 # ----------------------------------------------------------------- geometry --
 LX = 240_000.0            # domain size, metres (projected easting extent)
@@ -28,7 +28,7 @@ M_NO2 = 46.0055e-3        # kg mol-1
 M_N = 14.0067e-3          # kg mol-1
 EMISSION_SCALE = 2.2      # global amplitude of the synthetic inventory
 K_DIFF = 400.0            # m2 s-1, prescribed horizontal eddy diffusivity
-ZETA0 = 0.35              # shape parameter of the normalised vertical profile
+P_NIGHT = 0.12            # floor of the prescribed photolysis proxy
 
 # ------------------------------------------------------------- time layout ---
 # 18 episodes across three seasons, three synoptic wind regimes.
@@ -64,19 +64,50 @@ EPISODE_START_ISO = [
 
 # ------------------------------------------------------------ latent truth ---
 # Chosen before any inversion was run.  Never leaves authoring/ and tests/.
+#
+# Chemical loss is concentration dependent: the NOx sink saturates as OH is
+# suppressed at high NOx, so
+#     L(C) = C * P / (tau0 * (1 + C / C_ref))
+# with P the prescribed photolysis proxy.  tau0 is the low-NOx loss time at
+# P = 1; C_ref is the column at which the effective loss rate is halved.
 TRUE_SOURCE_SCALE = np.array([1.62, 0.74, 2.08, 0.47, 1.26, 1.91])
-TRUE_LIFETIME_S = 16_560.0        # 4.6 h effective NOx loss time
+TRUE_TAU0_S = 5_400.0             # 1.5 h low-NOx loss time at unit photolysis
+TRUE_C_REF = 6.0e-5               # mol m-2, NOx column that halves the loss rate
 TRUE_WIND_SPEED_SCALE = 1.18
 TRUE_WIND_ROTATION_DEG = -13.5
 TRUE_BACKGROUND = np.array([2.10e-5, 4.00e-6, -3.20e-6])   # b0, bx, by [mol m-2]
+TRUE_FIXED_SCALE = 1.34           # non-road sources are also mis-reported
+TRUE_ZETA0 = 0.29                 # shape parameter of the vertical profile
 
 # admissible ranges published to the agent
 BOUNDS = {
     "emission_scale": (0.30, 2.50),
-    "effective_lifetime_s": (3600.0, 28800.0),
+    "reference_loss_time_s": (1800.0, 28800.0),
+    "loss_saturation_column": (1.0e-5, 1.0e-3),
     "wind_speed_scale": (0.70, 1.30),
     "wind_rotation_deg": (-20.0, 20.0),
+    "fixed_source_scale": (0.40, 2.20),
+    "vertical_shape_zeta0": (0.12, 0.80),
 }
+
+# ------------------------------------------------- instrument row anomaly ----
+# A contiguous band of across-track positions develops a bias partway through
+# the record, as real ultraviolet imagers do.  The quality flag does not catch
+# it.  Its existence is disclosed generically in model_spec.md; which rows and
+# from when is not, and has to be found in the data.
+ANOMALY_GROUND_PIXEL = (13, 26)          # inclusive across-track index band
+ANOMALY_FROM_EPISODE_TIME = "2023-10-01T00:00:00Z"
+ANOMALY_GAIN = 1.40
+ANOMALY_OFFSET = 1.8e-5                  # mol m-2
+ANOMALY_NOISE_INFLATION = 1.35
+
+# ------------------------------------------------- observation error model ---
+# Reported 1-sigma has a floor and a component proportional to the signal, as
+# real retrievals and analysers do.
+SAT_SIGMA_FLOOR = (0.55e-5, 1.15e-5)     # uniform draw per footprint, mol m-2
+SAT_SIGMA_REL = 0.10
+STA_SIGMA_FLOOR = (1.8, 3.6)             # uniform draw per site, ug m-3
+STA_SIGMA_REL = 0.07
 
 REGION_NAMES = [
     "R1_core_motorway_ring",

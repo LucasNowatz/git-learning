@@ -82,8 +82,12 @@ class Advector:
         p[..., 2:-2, 2:-2] = c
         return p
 
-    def step(self, c, ufx, vfy, emis, dt, tau):
-        """One time step.  c may carry a leading basis axis."""
+    def step(self, c, ufx, vfy, emis, dt, tau0, c_ref, photo):
+        """One time step with concentration-dependent chemical loss.
+
+        The sink is L(C) = C * P / (tau0 * (1 + C / C_ref)); the coefficient is
+        evaluated at the current column and applied as an exponential update.
+        """
         p = self._pad(c)
         dx = self.dx
 
@@ -125,7 +129,8 @@ class Advector:
                           + (gy[..., 1:, :] - gy[..., :-1, :]) / dx)
 
         cn = c + dt * (-div + lap + emis)
-        return cn * np.exp(-dt / tau)
+        k = photo / (tau0 * (1.0 + np.maximum(cn, 0.0) / c_ref))
+        return cn * np.exp(-dt * k)
 
 
 def face_velocities(ug, vg):
@@ -161,7 +166,7 @@ def background_field(coef, x, y):
 
 
 # ------------------------------------------------- vertical shape operators --
-def phi_shape(zeta, zeta0=C.ZETA0):
+def phi_shape(zeta, zeta0):
     """Normalised in-layer vertical shape; integrates to one over zeta in [0,1]."""
     z = np.asarray(zeta, dtype=float)
     val = np.exp(-z / zeta0) / (zeta0 * (1.0 - np.exp(-1.0 / zeta0)))

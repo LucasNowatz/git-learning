@@ -32,7 +32,6 @@ def read_inputs(data_dir):
         I["diurnal"] = np.asarray(ds["road_diurnal_factor"][:])
     with Dataset(os.path.join(data_dir, "meteorology.nc")) as ds:
         I["K"] = float(ds.horizontal_diffusivity_m2_s)
-        I["zeta0"] = float(ds.vertical_shape_zeta0)
         I["xm"] = np.asarray(ds["xm"][:]); I["ym"] = np.asarray(ds["ym"][:])
         I["mtime"] = np.asarray(ds["time"][:])
         zb = np.asarray(ds["level_bounds"][:])
@@ -40,6 +39,7 @@ def read_inputs(data_dir):
         v = np.asarray(ds["v_north"][:], dtype=float)
         h = np.asarray(ds["blh"][:], dtype=float)
         I["f_no2"] = np.asarray(ds["f_no2"][:], dtype=float)
+        I["photo"] = np.asarray(ds["photolysis_factor"][:], dtype=float)
         I["blh"] = h
         num_u = np.zeros_like(h); num_v = np.zeros_like(h); den = np.zeros_like(h)
         for lv in range(zb.shape[0]):
@@ -197,17 +197,20 @@ def diurnal_at(t, tab):
 def forward_episode(I, e, params, W_sat, sta, nx, ny):
     """Return (satellite predictions, station predictions) for one episode."""
     s = np.asarray(params["emission_scale"], float)
-    tau = float(params["effective_lifetime_s"])
+    tau0 = float(params["reference_loss_time_s"])
+    c_ref = float(params["loss_saturation_column"])
     a_sc = float(params["wind_speed_scale"])
     delta = float(params["wind_rotation_deg"])
     b0, bx, by = (float(v) for v in params["background_coefficients"])
+    fixed_scale = float(params["fixed_source_scale"])
+    zeta0 = float(params["vertical_shape_zeta0"])
 
     ip = Bilin(I["xm"], I["ym"], I["x"], I["y"])
     XT, YT = np.meshgrid(I["x"] / (nx * DX), I["y"] / (ny * DX))
     bg = b0 + bx * XT + by * YT
     c = bg.copy()
     emis_road = np.tensordot(s, I["road"], axes=(0, 0))
-    emis_fix = float(I["fixed_factor"][e]) * I["fixed"]
+    emis_fix = fixed_scale * float(I["fixed_factor"][e]) * I["fixed"]
     gam = np.deg2rad(I["gamma"])
     cd, sd = np.cos(np.deg2rad(delta)), np.sin(np.deg2rad(delta))
     cg, sg = np.cos(gam), np.sin(gam)
@@ -227,6 +230,7 @@ def forward_episode(I, e, params, W_sat, sta, nx, ny):
         L = lambda A: (1 - w) * A[k] + w * A[k + 1]
         u = ip(L(I["ue"][e])); v = ip(L(I["vn"][e]))
         h = ip(L(I["blh"][e])); f = ip(L(I["f_no2"][e]))
+        ph = ip(L(I["photo"][e]))
         ue = a_sc * (cd * u - sd * v)
         vn = a_sc * (sd * u + cd * v)
         ug = cg * ue + sg * vn
@@ -243,7 +247,9 @@ def forward_episode(I, e, params, W_sat, sta, nx, ny):
         c = sweep_y(c, bg, vf, DT)
         c = sweep_x(c, bg, uf, 0.5 * DT)
         c = diffuse(c, I["K"], DT)
-        c = (c + DT * em) * np.exp(-DT / tau)
+        c = c + DT * em
+        kloss = ph / (tau0 * (1.0 + np.maximum(c, 0.0) / c_ref))
+        c = c * np.exp(-DT * kloss)
 
         if (not done) and (t + DT >= tsat):
             frac = (tsat - t) / DT
@@ -258,7 +264,7 @@ def forward_episode(I, e, params, W_sat, sta, nx, ny):
         if sel.any():
             z = sta["h"][sel] / h[sj[sel], si[sel]]
             acc[sel] += (f[sj[sel], si[sel]] * c[sj[sel], si[sel]]
-                         * phi(z, I["zeta0"]) / h[sj[sel], si[sel]]) * UG_PER_MOL_NO2
+                         * phi(z, zeta0) / h[sj[sel], si[sel]]) * UG_PER_MOL_NO2
             cnt[sel] += 1.0
         t += DT
     return y_sat, acc / np.maximum(cnt, 1.0)

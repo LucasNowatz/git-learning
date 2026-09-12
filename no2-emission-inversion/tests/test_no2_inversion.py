@@ -42,9 +42,10 @@ def test_result_json_schema(ctx):
     with open(p) as fh:
         r = json.load(fh)
     assert isinstance(r, dict)
-    need = ["region_ids", "emission_scale", "effective_lifetime_s",
-            "wind_speed_scale", "wind_rotation_deg", "background_coefficients",
-            "integrated_road_mol_s"]
+    need = ["region_ids", "emission_scale", "reference_loss_time_s",
+            "loss_saturation_column", "wind_speed_scale", "wind_rotation_deg",
+            "background_coefficients", "fixed_source_scale",
+            "vertical_shape_zeta0", "integrated_road_mol_s"]
     for k in need:
         assert k in r, f"result.json is missing required key {k!r}"
     rid = [int(v) for v in r["region_ids"]]
@@ -52,7 +53,9 @@ def test_result_json_schema(ctx):
     es = np.asarray(r["emission_scale"], dtype=float)
     assert es.shape == (NREG,), "emission_scale must hold six values"
     assert np.all(np.isfinite(es))
-    for k in ("effective_lifetime_s", "wind_speed_scale", "wind_rotation_deg"):
+    for k in ("reference_loss_time_s", "loss_saturation_column",
+              "wind_speed_scale", "wind_rotation_deg", "fixed_source_scale",
+              "vertical_shape_zeta0"):
         assert np.isfinite(float(r[k])), f"{k} must be finite"
     bg = np.asarray(r["background_coefficients"], dtype=float)
     assert bg.shape == (3,) and np.all(np.isfinite(bg))
@@ -67,10 +70,14 @@ def test_result_json_schema(ctx):
     ctx["state"]["result"] = r
     ctx["state"]["scale"] = es[order]
     ctx["state"]["params"] = dict(
-        emission_scale=es[order], effective_lifetime_s=float(r["effective_lifetime_s"]),
+        emission_scale=es[order],
+        reference_loss_time_s=float(r["reference_loss_time_s"]),
+        loss_saturation_column=float(r["loss_saturation_column"]),
         wind_speed_scale=float(r["wind_speed_scale"]),
         wind_rotation_deg=float(r["wind_rotation_deg"]),
-        background_coefficients=bg)
+        background_coefficients=bg,
+        fixed_source_scale=float(r["fixed_source_scale"]),
+        vertical_shape_zeta0=float(r["vertical_shape_zeta0"]))
 
 
 def test_posterior_schema(ctx):
@@ -146,13 +153,13 @@ def test_parameters_admissible(ctx):
     s = P["emission_scale"]
     assert np.all(s >= b["emission_scale"][0] - 1e-9) and np.all(s <= b["emission_scale"][1] + 1e-9), \
         f"emission_scale outside the published range: {s}"
-    tau = P["effective_lifetime_s"]
-    assert b["effective_lifetime_s"][0] - 1e-6 <= tau <= b["effective_lifetime_s"][1] + 1e-6, \
-        f"effective_lifetime_s = {tau} s is outside the published range"
-    a = P["wind_speed_scale"]
-    assert b["wind_speed_scale"][0] - 1e-9 <= a <= b["wind_speed_scale"][1] + 1e-9
-    dd = P["wind_rotation_deg"]
-    assert b["wind_rotation_deg"][0] - 1e-9 <= dd <= b["wind_rotation_deg"][1] + 1e-9
+    for key in ("reference_loss_time_s", "loss_saturation_column",
+                "wind_speed_scale", "wind_rotation_deg", "fixed_source_scale",
+                "vertical_shape_zeta0"):
+        lo, hi = b[key]
+        val = P[key]
+        assert lo * (1 - 1e-9) - 1e-12 <= val <= hi * (1 + 1e-9) + 1e-12, \
+            f"{key} = {val} is outside the published range [{lo}, {hi}]"
     b0, bx, by = P["background_coefficients"]
     corners = [b0, b0 + bx, b0 + by, b0 + bx + by]
     assert min(corners) >= -1e-12, \
@@ -170,12 +177,13 @@ def test_exported_fluxes_match_parameters(ctx):
         "corrected_road_flux does not equal emission_scale times the supplied "
         f"prior converted to mol m-2 s-1 (max relative deviation {err:.3e}); "
         "check the NO2-equivalent mass basis of road_prior")
-    exp_tot = expect.sum(axis=0) + I["fixed"]
+    exp_tot = expect.sum(axis=0) + ctx["state"]["params"]["fixed_source_scale"] * I["fixed"]
     err2 = float(np.abs(ctx["state"]["tsf"] - exp_tot).max()) / float(np.abs(exp_tot).max())
     assert err2 <= 2e-3, (
         "total_source_flux does not equal the corrected road flux plus the "
         f"prescribed non-road sources (max relative deviation {err2:.3e}); "
-        "check the nitrogen mass basis of fixed_sources")
+        "check the nitrogen mass basis of fixed_sources and the reported "
+        "fixed_source_scale")
 
 
 def test_reported_totals_match_parameters(ctx):
@@ -203,11 +211,17 @@ def recomputed(ctx):
                             ctx["state"]["params"], NX, NY)
 
 
+def _sigma(meas, value, floor, rel):
+    return np.sqrt(meas ** 2 + floor ** 2 + (rel * np.abs(value)) ** 2)
+
+
 def test_predictions_consistent_with_parameters(ctx, recomputed):
     ev = ctx["ev"]
     rs, rt = recomputed
-    st = np.hypot(ctx["qsat"]["sigma"], float(ev["sigma_repr_sat"]))
-    tt = np.hypot(ctx["qsta"]["sigma"], float(ev["sigma_repr_sta"]))
+    st = _sigma(ctx["qsat"]["sigma"], ev["sat_truth"],
+                float(ev["repr_sat_floor"]), float(ev["repr_sat_rel"]))
+    tt = _sigma(ctx["qsta"]["sigma"], ev["sta_truth"],
+                float(ev["repr_sta_floor"]), float(ev["repr_sta_rel"]))
     ds = float(np.sqrt(np.mean(((ctx["state"]["pred_sat"] - rs) / st) ** 2)))
     dt = float(np.sqrt(np.mean(((ctx["state"]["pred_sta"] - rt) / tt) ** 2)))
     lim = ctx["thr"]["consistency_max"]
@@ -226,8 +240,10 @@ def _wrmse(pred, truth, sigma):
 
 def test_held_out_skill(ctx):
     ev = ctx["ev"]
-    st = np.hypot(ev["sat_sigma_meas"], float(ev["sigma_repr_sat"]))
-    tt = np.hypot(ev["sta_sigma_meas"], float(ev["sigma_repr_sta"]))
+    st = _sigma(ev["sat_sigma_meas"], ev["sat_truth"],
+                float(ev["repr_sat_floor"]), float(ev["repr_sat_rel"]))
+    tt = _sigma(ev["sta_sigma_meas"], ev["sta_truth"],
+                float(ev["repr_sta_floor"]), float(ev["repr_sta_rel"]))
     ws = _wrmse(ctx["state"]["pred_sat"], ev["sat_truth"], st)
     wt = _wrmse(ctx["state"]["pred_sta"], ev["sta_truth"], tt)
     thr = ctx["thr"]["skill"]
@@ -242,8 +258,10 @@ def test_held_out_skill(ctx):
 
 def test_regime_robustness(ctx):
     ev = ctx["ev"]
-    st = np.hypot(ev["sat_sigma_meas"], float(ev["sigma_repr_sat"]))
-    tt = np.hypot(ev["sta_sigma_meas"], float(ev["sigma_repr_sta"]))
+    st = _sigma(ev["sat_sigma_meas"], ev["sat_truth"],
+                float(ev["repr_sat_floor"]), float(ev["repr_sat_rel"]))
+    tt = _sigma(ev["sta_sigma_meas"], ev["sta_truth"],
+                float(ev["repr_sta_floor"]), float(ev["repr_sta_rel"]))
     thr = ctx["thr"]["regime"]
     bad = []
     for reg in sorted(set(ev["sat_regime"].tolist())):
@@ -257,19 +275,8 @@ def test_regime_robustness(ctx):
             bad.append(f"{reg} station WRMSE {wt:.4f} > {thr[reg]['station']}")
     assert not bad, "wind regimes failing their own threshold: " + "; ".join(bad)
 
-
-# ------------------------------------------------------------------ gate 6 --
-def test_identifiable_emission_recovery(ctx):
-    ev = ctx["ev"]
-    rep = ctx["state"]["result"]["integrated_road_mol_s"]
-    true = ev["true_total_mol_s"]
-    tol = ctx["thr"]["total_emission_rel_tol"]
-    worst, where = 0.0, -1
-    for e in range(N_EPISODES):
-        got = float(rep[str(e)] if str(e) in rep else rep[e])
-        rel = abs(got - float(true[e])) / float(true[e])
-        if rel > worst:
-            worst, where = rel, e
-    assert worst <= tol, (
-        f"domain-integrated road NOx emission is off by {100*worst:.2f} percent "
-        f"at episode {where}; the tolerated deviation is {100*tol:.2f} percent")
+# The domain-integrated road emission is deliberately not graded: the
+# identifiability study in authoring/evidence/EVIDENCE.md shows the public data
+# do not constrain the absolute total, because the saturating sink lets
+# emission amplitude, reference loss time and saturation column trade against
+# one another.  Only quantities the data determine are compared with the truth.

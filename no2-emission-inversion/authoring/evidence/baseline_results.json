@@ -1,466 +1,254 @@
 {
-  "clipped_negatives": {
-    "chi2_per_obs": 0.8681616222643185,
-    "consistency_sat": 0.07117530132533754,
-    "consistency_sta": 0.08578583147252203,
-    "fit_seconds": 513.2,
-    "label": "clipped_negatives",
+  "first_order_loss": {
+    "chi2_per_obs": 1.0719371734023644,
+    "consistency_sat": 0.08188234478140097,
+    "consistency_sta": 0.091637946524574,
+    "fit_seconds": 580.5,
+    "label": "first_order_loss",
+    "n_retained": 4805,
+    "param_err": {
+      "c_ref": 15.6667,
+      "fixed": -0.3384,
+      "rot": 0.035,
+      "tau0": 1.6501,
+      "wind": 0.0364,
+      "zeta0": 0.0076
+    },
     "params": {
       "background": [
-        1.9627757106195256e-05,
-        4.6776444931942656e-06,
-        -1.2728367938286844e-07
+        1.5171860415077056e-05,
+        1.8533871448756246e-06,
+        -1.672820585874423e-06
       ],
+      "c_ref": 0.0009999999990000091,
       "emission_scale": [
-        1.68177,
-        0.71462,
-        2.19162,
-        0.56185,
-        1.361,
-        2.00816
-      ],
-      "lifetime_h": 4.4247,
-      "wind_rotation_deg": -13.3702,
-      "wind_speed_scale": 1.20533
-    },
-    "regime": {
-      "NE_continental": {
-        "satellite": 0.2853205181801202,
-        "station": 0.48239684812086475
-      },
-      "SW_advective": {
-        "satellite": 0.2752309160169193,
-        "station": 0.2563783150431326
-      },
-      "S_light_variable": {
-        "satellite": 0.15105597120863418,
-        "station": 0.6577452557553329
-      }
-    },
-    "total_emission_rel_err_max": 0.04866692247497391,
-    "total_emission_rel_err_signed": 0.04866692247497362,
-    "verifier_forward_wrmse_sat": 0.20648490510970793,
-    "verifier_forward_wrmse_sta": 0.4883301038620414,
-    "wrmse_sat": 0.24534324269623878,
-    "wrmse_sta": 0.4936481138658551
-  },
-  "coarse_time_step_300s": {
-    "chi2_per_obs": 26.607309891173212,
-    "consistency_sat": 0.10471663226828423,
-    "consistency_sta": 0.08684918220313567,
-    "fit_seconds": 104.6,
-    "label": "coarse_time_step_300s",
-    "params": {
-      "background": [
-        2.4983818274873983e-06,
-        -9.495610194715286e-07,
-        2.855689936430103e-05
-      ],
-      "emission_scale": [
-        0.34531,
-        0.80444,
-        1.36967,
+        1.81262,
+        0.55209,
+        2.25272,
         0.3,
-        0.37876,
-        1.11565
+        1.14557,
+        1.7341
       ],
-      "lifetime_h": 7.1789,
-      "wind_rotation_deg": -16.8701,
-      "wind_speed_scale": 0.70009
+      "fixed_scale": 0.88649,
+      "tau0_h": 3.9752,
+      "wind_rotation_deg": -13.4646,
+      "wind_speed_scale": 1.22297,
+      "zeta0": 0.29219
     },
     "regime": {
       "NE_continental": {
-        "satellite": 1.5414682555519408,
-        "station": 1.7058493695756403
+        "satellite": 0.5192934962603534,
+        "station": 0.6041388931838957
       },
       "SW_advective": {
-        "satellite": 1.716786646089894,
-        "station": 1.8879094242576266
+        "satellite": 0.4225491535971061,
+        "station": 0.7099355996590628
       },
       "S_light_variable": {
-        "satellite": 1.825431649951778,
-        "station": 4.246500821638197
+        "satellite": 0.5352571620635229,
+        "station": 0.8780678540629144
       }
     },
-    "total_emission_rel_err_max": 0.5145440294565201,
-    "total_emission_rel_err_signed": -0.51454402945652,
-    "verifier_forward_wrmse_sat": 1.6908635625238024,
-    "verifier_forward_wrmse_sta": 2.8218973497504054,
-    "wrmse_sat": 1.7000625098095856,
-    "wrmse_sta": 2.858140030046129
+    "total_emission_rel_err_max": 0.01219026362537723,
+    "total_emission_rel_err_signed": -0.012190263625377007,
+    "verifier_forward_wrmse_sat": 0.4486681779127685,
+    "verifier_forward_wrmse_sta": 0.6905750395371152,
+    "wrmse_sat": 0.4946245358067096,
+    "wrmse_sta": 0.7393680892625781
   },
-  "first_order_upwind": {
-    "chi2_per_obs": 1.3397946812926036,
-    "consistency_sat": 0.6247231605073925,
-    "consistency_sta": 0.8500306828247917,
-    "fit_seconds": 398.9,
-    "label": "first_order_upwind",
+  "fixed_sources_unscaled": {
+    "chi2_per_obs": 0.9675495386478912,
+    "consistency_sat": 0.09276532258602004,
+    "consistency_sta": 0.1008599878702748,
+    "fit_seconds": 624.2,
+    "label": "fixed_sources_unscaled",
+    "n_retained": 4805,
+    "param_err": {
+      "c_ref": -0.307,
+      "fixed": -0.2537,
+      "rot": 0.063,
+      "tau0": -0.1852,
+      "wind": 0.0051,
+      "zeta0": -0.0223
+    },
     "params": {
       "background": [
-        1.7128005163584454e-05,
-        5.8886454930686186e-06,
-        -1.377998946515304e-06
+        2.1580725402740937e-05,
+        4.056218522085494e-06,
+        -3.2461454304848814e-06
       ],
+      "c_ref": 4.1577907786928214e-05,
       "emission_scale": [
-        1.66328,
-        0.65922,
-        2.24156,
-        0.47802,
-        1.40839,
-        1.86501
+        1.6658,
+        0.77372,
+        2.07823,
+        0.56889,
+        1.26263,
+        1.891
       ],
-      "lifetime_h": 4.8584,
-      "wind_rotation_deg": -13.4197,
-      "wind_speed_scale": 1.20127
+      "fixed_scale": 1.0,
+      "tau0_h": 1.2222,
+      "wind_rotation_deg": -13.4375,
+      "wind_speed_scale": 1.18605,
+      "zeta0": 0.28353
     },
     "regime": {
       "NE_continental": {
-        "satellite": 0.8392734778868783,
-        "station": 0.9630653279123873
+        "satellite": 0.3842888703478069,
+        "station": 0.6441084991599761
       },
       "SW_advective": {
-        "satellite": 0.7848940869696445,
-        "station": 1.152879708577769
+        "satellite": 0.2787657024008362,
+        "station": 0.507368537220445
       },
       "S_light_variable": {
-        "satellite": 0.4113798180833106,
-        "station": 1.0067781131696956
+        "satellite": 0.26955040857162466,
+        "station": 0.5778703302118459
       }
     },
-    "total_emission_rel_err_max": 0.028945457677576475,
-    "total_emission_rel_err_signed": 0.02894545767757628,
-    "verifier_forward_wrmse_sat": 0.24713767962143632,
-    "verifier_forward_wrmse_sta": 0.49752157775888534,
-    "wrmse_sat": 0.7055198906583768,
-    "wrmse_sta": 1.044067146217919
+    "total_emission_rel_err_max": 0.02241700828542271,
+    "total_emission_rel_err_signed": 0.02241700828542248,
+    "verifier_forward_wrmse_sat": 0.25289108777048414,
+    "verifier_forward_wrmse_sta": 0.5250760811618451,
+    "wrmse_sat": 0.31490092610278275,
+    "wrmse_sta": 0.5791467027131321
   },
-  "grid_convergence_ignored": {
-    "chi2_per_obs": 0.9943979026797827,
-    "consistency_sat": 0.16413674288984456,
-    "consistency_sta": 0.176391480021025,
-    "fit_seconds": 519.4,
-    "label": "grid_convergence_ignored",
+  "no_artefact_screening": {
+    "chi2_per_obs": 2.188139933513746,
+    "consistency_sat": 0.1006774098337641,
+    "consistency_sta": 0.08882974489225996,
+    "fit_seconds": 513.9,
+    "label": "no_artefact_screening",
+    "n_retained": 6210,
+    "param_err": {
+      "c_ref": 0.4474,
+      "fixed": 0.6415,
+      "rot": 0.177,
+      "tau0": -0.1928,
+      "wind": 0.0047,
+      "zeta0": 0.2636
+    },
     "params": {
       "background": [
-        1.8106844826359297e-05,
-        5.865115642933776e-06,
-        -2.111165348011725e-08
+        3.422942190785265e-05,
+        6.403903907192237e-06,
+        -3.114507011207771e-06
       ],
+      "c_ref": 8.684639092861155e-05,
       "emission_scale": [
-        1.67599,
-        0.71422,
-        2.19232,
-        0.5529,
-        1.324,
-        1.99682
+        2.09802,
+        1.33639,
+        2.5,
+        1.33682,
+        1.55427,
+        2.276
       ],
-      "lifetime_h": 4.4192,
-      "wind_rotation_deg": -13.5931,
-      "wind_speed_scale": 1.19611
+      "fixed_scale": 2.19957,
+      "tau0_h": 1.2109,
+      "wind_rotation_deg": -13.3233,
+      "wind_speed_scale": 1.18559,
+      "zeta0": 0.36646
     },
     "regime": {
       "NE_continental": {
-        "satellite": 0.32659579913355774,
-        "station": 0.5546145506444722
+        "satellite": 0.962415869455998,
+        "station": 0.7743418222054714
       },
       "SW_advective": {
-        "satellite": 0.33482977501855576,
-        "station": 0.2896380374664997
+        "satellite": 0.8806569205513071,
+        "station": 0.6517295413581544
       },
       "S_light_variable": {
-        "satellite": 0.19531392120791585,
-        "station": 0.6608728743711522
+        "satellite": 0.9433789231322552,
+        "station": 1.229973793081426
       }
     },
-    "total_emission_rel_err_max": 0.04126888989329848,
-    "total_emission_rel_err_signed": 0.041268889893298466,
-    "verifier_forward_wrmse_sat": 0.20920067106536178,
-    "verifier_forward_wrmse_sta": 0.4870604768891441,
-    "wrmse_sat": 0.2934004943605854,
-    "wrmse_sta": 0.5254332969444057
-  },
-  "grid_convergence_sign_flipped": {
-    "chi2_per_obs": 1.0707041786583285,
-    "consistency_sat": 0.31293805554642246,
-    "consistency_sta": 0.33584245538459695,
-    "fit_seconds": 517.5,
-    "label": "grid_convergence_sign_flipped",
-    "params": {
-      "background": [
-        1.8220545321946902e-05,
-        6.002703036943577e-06,
-        5.358151275585949e-07
-      ],
-      "emission_scale": [
-        1.66006,
-        0.70051,
-        2.17455,
-        0.53991,
-        1.26756,
-        1.96524
-      ],
-      "lifetime_h": 4.4422,
-      "wind_rotation_deg": -13.8799,
-      "wind_speed_scale": 1.18658
-    },
-    "regime": {
-      "NE_continental": {
-        "satellite": 0.4308481395963977,
-        "station": 0.6611866292892704
-      },
-      "SW_advective": {
-        "satellite": 0.445321220966115,
-        "station": 0.3572528985614391
-      },
-      "S_light_variable": {
-        "satellite": 0.30087388558919825,
-        "station": 0.7188236819633994
-      }
-    },
-    "total_emission_rel_err_max": 0.023660162566470452,
-    "total_emission_rel_err_signed": 0.0236601625664703,
-    "verifier_forward_wrmse_sat": 0.226848359311835,
-    "verifier_forward_wrmse_sta": 0.4915143246812534,
-    "wrmse_sat": 0.39857029581182946,
-    "wrmse_sta": 0.6004178761587288
-  },
-  "nearest_cell_footprint": {
-    "chi2_per_obs": 1.0193693489227236,
-    "consistency_sat": 0.31985158168248484,
-    "consistency_sta": 0.08405883765569575,
-    "fit_seconds": 519.0,
-    "label": "nearest_cell_footprint",
-    "params": {
-      "background": [
-        1.870939153614055e-05,
-        6.054522446283365e-06,
-        -9.784555830004019e-07
-      ],
-      "emission_scale": [
-        1.6325,
-        0.72082,
-        2.13743,
-        0.54542,
-        1.33207,
-        1.97349
-      ],
-      "lifetime_h": 4.5147,
-      "wind_rotation_deg": -13.4635,
-      "wind_speed_scale": 1.20239
-    },
-    "regime": {
-      "NE_continental": {
-        "satellite": 0.339030248516162,
-        "station": 0.5120954322409055
-      },
-      "SW_advective": {
-        "satellite": 0.35256713747273,
-        "station": 0.2345677113385157
-      },
-      "S_light_variable": {
-        "satellite": 0.34229872900884395,
-        "station": 0.6348634768035286
-      }
-    },
-    "total_emission_rel_err_max": 0.026071966419812628,
-    "total_emission_rel_err_signed": 0.026071966419812576,
-    "verifier_forward_wrmse_sat": 0.21105577802196815,
-    "verifier_forward_wrmse_sta": 0.4838676502234442,
-    "wrmse_sat": 0.3448980210586515,
-    "wrmse_sta": 0.4900052302794511
-  },
-  "no_diurnal_factor": {
-    "chi2_per_obs": 1.1234759565331047,
-    "consistency_sat": 0.8220597287053584,
-    "consistency_sta": 2.2763376904261916,
-    "fit_seconds": 523.0,
-    "label": "no_diurnal_factor",
-    "params": {
-      "background": [
-        1.6704075237854454e-05,
-        6.344149210007382e-06,
-        -6.338843023152275e-07
-      ],
-      "emission_scale": [
-        1.81453,
-        0.75915,
-        2.38564,
-        0.51971,
-        1.46945,
-        2.13731
-      ],
-      "lifetime_h": 5.7711,
-      "wind_rotation_deg": -13.3054,
-      "wind_speed_scale": 1.06677
-    },
-    "regime": {
-      "NE_continental": {
-        "satellite": 0.359811969828187,
-        "station": 0.6520954597843809
-      },
-      "SW_advective": {
-        "satellite": 0.3688202256553476,
-        "station": 0.6000583409855953
-      },
-      "S_light_variable": {
-        "satellite": 0.3652626486280688,
-        "station": 1.3694531428769292
-      }
-    },
-    "total_emission_rel_err_max": 0.12179200646026422,
-    "total_emission_rel_err_signed": 0.121792006460264,
-    "verifier_forward_wrmse_sat": 1.0174411812073227,
-    "verifier_forward_wrmse_sta": 1.6756538243918873,
-    "wrmse_sat": 0.3647780545117879,
-    "wrmse_sta": 0.9417537561721901
-  },
-  "no_qa_screening": {
-    "chi2_per_obs": 11.242147254853206,
-    "consistency_sat": 0.07298079846753516,
-    "consistency_sta": 0.08763335513964954,
-    "fit_seconds": 531.1,
-    "label": "no_qa_screening",
-    "params": {
-      "background": [
-        4.782509906867024e-05,
-        -5.184256183089509e-06,
-        -7.732423088299096e-07
-      ],
-      "emission_scale": [
-        1.56422,
-        0.82162,
-        1.91967,
-        0.5589,
-        1.3669,
-        2.14511
-      ],
-      "lifetime_h": 5.4786,
-      "wind_rotation_deg": -13.0463,
-      "wind_speed_scale": 1.17612
-    },
-    "regime": {
-      "NE_continental": {
-        "satellite": 1.0938988109797496,
-        "station": 0.9698644217173927
-      },
-      "SW_advective": {
-        "satellite": 1.2783787147033279,
-        "station": 1.0009700469741003
-      },
-      "S_light_variable": {
-        "satellite": 1.0510904095067353,
-        "station": 1.4194062357809232
-      }
-    },
-    "total_emission_rel_err_max": 0.02298682499770772,
-    "total_emission_rel_err_signed": 0.022986824997707433,
-    "verifier_forward_wrmse_sat": 1.1417801439866349,
-    "verifier_forward_wrmse_sta": 1.1434352308684703,
-    "wrmse_sat": 1.1488697613045158,
-    "wrmse_sta": 1.1485196404685927
-  },
-  "no_rotation": {
-    "chi2_per_obs": 3.2341341110498205,
-    "consistency_sat": 0.07021007349915268,
-    "consistency_sta": 0.08225696210098164,
-    "fit_seconds": 308.4,
-    "label": "no_rotation",
-    "params": {
-      "background": [
-        1.6380133299897707e-05,
-        1.5860248161060373e-05,
-        -2.0704644650268917e-06
-      ],
-      "emission_scale": [
-        1.45224,
-        1.11134,
-        2.013,
-        0.5914,
-        1.50519,
-        1.6584
-      ],
-      "lifetime_h": 3.8105,
-      "wind_rotation_deg": 0.0,
-      "wind_speed_scale": 1.0207
-    },
-    "regime": {
-      "NE_continental": {
-        "satellite": 1.6250188590992614,
-        "station": 1.8555500663874454
-      },
-      "SW_advective": {
-        "satellite": 1.569074747987133,
-        "station": 1.702202395142742
-      },
-      "S_light_variable": {
-        "satellite": 1.277066474135865,
-        "station": 1.7785412104619005
-      }
-    },
-    "total_emission_rel_err_max": 0.0341164935509256,
-    "total_emission_rel_err_signed": 0.0341164935509255,
-    "verifier_forward_wrmse_sat": 1.5326968168773563,
-    "verifier_forward_wrmse_sta": 1.8240994424678532,
-    "wrmse_sat": 1.4988613873910488,
-    "wrmse_sta": 1.7798659013355869
+    "total_emission_rel_err_max": 0.37341348364429366,
+    "total_emission_rel_err_signed": 0.3734134836442935,
+    "verifier_forward_wrmse_sat": 0.9125525918766598,
+    "verifier_forward_wrmse_sta": 0.8820494473878433,
+    "wrmse_sat": 0.9292530580022826,
+    "wrmse_sta": 0.9196361933508472
   },
   "no_wind_correction": {
-    "chi2_per_obs": 3.2347850605194886,
-    "consistency_sat": 0.06929095368294898,
-    "consistency_sta": 0.08137806759927403,
-    "fit_seconds": 399.3,
+    "chi2_per_obs": 3.156826830996582,
+    "consistency_sat": 0.06618603097814482,
+    "consistency_sta": 0.06706813639470498,
+    "fit_seconds": 791.2,
     "label": "no_wind_correction",
+    "n_retained": 4614,
+    "param_err": {
+      "c_ref": 15.6667,
+      "fixed": -0.0991,
+      "rot": 13.5,
+      "tau0": 0.38,
+      "wind": -0.1525,
+      "zeta0": -0.0044
+    },
     "params": {
       "background": [
-        1.6407988203046306e-05,
-        1.5987060351716766e-05,
-        -2.222780241284715e-06
+        1.5376599359947076e-05,
+        1.2123179916168636e-05,
+        4.3362886175566e-06
       ],
+      "c_ref": 0.0009999999999999985,
       "emission_scale": [
-        1.41658,
-        1.09123,
-        1.96905,
-        0.57394,
-        1.46636,
-        1.61085
+        1.4363,
+        1.15075,
+        1.93507,
+        0.5331,
+        1.5979,
+        1.72307
       ],
-      "lifetime_h": 3.915,
-      "wind_rotation_deg": 0.0,
-      "wind_speed_scale": 1.0
+      "fixed_scale": 1.20725,
+      "tau0_h": 2.0701,
+      "wind_rotation_deg": -0.0,
+      "wind_speed_scale": 1.0,
+      "zeta0": 0.28871
     },
     "regime": {
       "NE_continental": {
-        "satellite": 1.6286378468247742,
-        "station": 1.8610422727751716
+        "satellite": 1.7945449039632513,
+        "station": 1.829588487454224
       },
       "SW_advective": {
-        "satellite": 1.5674882554227774,
-        "station": 1.6968807886888402
+        "satellite": 1.5137190925278354,
+        "station": 1.10552719593486
       },
       "S_light_variable": {
-        "satellite": 1.2741822587030294,
-        "station": 1.779644251804822
+        "satellite": 1.7829432758607586,
+        "station": 1.941658171692901
       }
     },
-    "total_emission_rel_err_max": 0.009309136726562141,
-    "total_emission_rel_err_signed": 0.009309136726562084,
-    "verifier_forward_wrmse_sat": 1.5320544936250926,
-    "verifier_forward_wrmse_sta": 1.8242055488550126,
-    "wrmse_sat": 1.4987352759020505,
-    "wrmse_sta": 1.7804509180784682
+    "total_emission_rel_err_max": 0.03954036515384052,
+    "total_emission_rel_err_signed": 0.03954036515384041,
+    "verifier_forward_wrmse_sat": 1.7270879931562086,
+    "verifier_forward_wrmse_sta": 1.6725599231950563,
+    "wrmse_sat": 1.7012731905687033,
+    "wrmse_sta": 1.667295301786544
   },
   "prior_unadjusted": {
-    "chi2_per_obs": 4.409655078817364,
-    "consistency_sat": 0.04421277618543641,
-    "consistency_sta": 0.061940725197489215,
-    "fit_seconds": 17.1,
+    "chi2_per_obs": 1.5041770420206675,
+    "consistency_sat": 0.06576553974205782,
+    "consistency_sta": 0.0759802907754834,
+    "fit_seconds": 1012.2,
     "label": "prior_unadjusted",
+    "n_retained": 4623,
+    "param_err": {
+      "c_ref": -0.8333,
+      "fixed": 0.0658,
+      "rot": 0.297,
+      "tau0": -0.5536,
+      "wind": -0.1577,
+      "zeta0": -0.204
+    },
     "params": {
       "background": [
-        1.9295191412814277e-05,
-        2.863233591914389e-05,
-        -1.8354109041823247e-06
+        1.619416334320167e-05,
+        2.166309177080028e-05,
+        -1.3467581397040295e-05
       ],
+      "c_ref": 1.0000000009630659e-05,
       "emission_scale": [
         1.0,
         1.0,
@@ -469,74 +257,88 @@
         1.0,
         1.0
       ],
-      "lifetime_h": 4.0,
-      "wind_rotation_deg": 0.0,
-      "wind_speed_scale": 1.0
+      "fixed_scale": 1.42817,
+      "tau0_h": 0.6696,
+      "wind_rotation_deg": -13.203,
+      "wind_speed_scale": 0.99392,
+      "zeta0": 0.23085
     },
     "regime": {
       "NE_continental": {
-        "satellite": 1.6613719787078063,
-        "station": 1.9662684512247182
+        "satellite": 0.9687659356754096,
+        "station": 1.389261537851746
       },
       "SW_advective": {
-        "satellite": 1.6543612534887715,
-        "station": 1.4124707199009408
+        "satellite": 0.7242412615093944,
+        "station": 0.7207480212206273
       },
       "S_light_variable": {
-        "satellite": 1.7082182545646447,
-        "station": 4.419084578198833
+        "satellite": 1.3785868943233883,
+        "station": 2.241242750599152
       }
     },
-    "total_emission_rel_err_max": 0.2529760644947488,
-    "total_emission_rel_err_signed": -0.25297606449474863,
-    "verifier_forward_wrmse_sat": 1.6859081435024448,
-    "verifier_forward_wrmse_sta": 2.930527657674294,
-    "wrmse_sat": 1.6744615058666046,
-    "wrmse_sta": 2.9091575909034724
+    "total_emission_rel_err_max": 0.2529760650309916,
+    "total_emission_rel_err_signed": -0.25297606503099146,
+    "verifier_forward_wrmse_sat": 1.044779294575958,
+    "verifier_forward_wrmse_sta": 1.5692794705512028,
+    "wrmse_sat": 1.0582852994258793,
+    "wrmse_sta": 1.578257942348768
   },
-  "wrong_mass_basis": {
-    "chi2_per_obs": 0.9783668759705224,
-    "consistency_sat": 0.16597087904458166,
-    "consistency_sta": 0.16124270639769006,
-    "fit_seconds": 517.7,
-    "label": "wrong_mass_basis",
+  "vertical_shape_assumed": {
+    "chi2_per_obs": 0.9900933100014183,
+    "consistency_sat": 0.09906199056693639,
+    "consistency_sta": 0.09162527038922072,
+    "fit_seconds": 947.9,
+    "label": "vertical_shape_assumed",
+    "n_retained": 4805,
+    "param_err": {
+      "c_ref": -0.127,
+      "fixed": 0.4076,
+      "rot": 0.069,
+      "tau0": -0.2576,
+      "wind": 0.0287,
+      "zeta0": 0.2069
+    },
     "params": {
       "background": [
-        1.8392282676360153e-05,
-        5.459695307367038e-06,
-        1.0824674804195422e-08
+        2.1720784034645426e-05,
+        4.715345960523493e-06,
+        -2.7457718302974777e-06
       ],
+      "c_ref": 5.238234700550212e-05,
       "emission_scale": [
-        1.71412,
-        0.72873,
-        2.19552,
-        0.58721,
-        1.37519,
-        1.99956
+        1.82626,
+        0.88385,
+        2.36986,
+        0.6889,
+        1.46389,
+        2.18652
       ],
-      "lifetime_h": 4.4639,
-      "wind_rotation_deg": -13.382,
-      "wind_speed_scale": 1.20729
+      "fixed_scale": 1.88617,
+      "tau0_h": 1.1136,
+      "wind_rotation_deg": -13.4315,
+      "wind_speed_scale": 1.21384,
+      "zeta0": 0.35
     },
     "regime": {
       "NE_continental": {
-        "satellite": 0.3016381626563502,
-        "station": 0.501193602755575
+        "satellite": 0.39203526909618575,
+        "station": 0.7386543891043329
       },
       "SW_advective": {
-        "satellite": 0.3061782944906489,
-        "station": 0.3215391063791392
+        "satellite": 0.3036664703335842,
+        "station": 0.492090912164301
       },
       "S_light_variable": {
-        "satellite": 0.23465771017021192,
-        "station": 0.702870816139818
+        "satellite": 0.4052191859924789,
+        "station": 0.6317101449085952
       }
     },
-    "total_emission_rel_err_max": 0.061380869745978145,
-    "total_emission_rel_err_signed": 0.061380869745977895,
-    "verifier_forward_wrmse_sat": 0.20899259085018362,
-    "verifier_forward_wrmse_sta": 0.5225935959205379,
-    "wrmse_sat": 0.28312916104136315,
-    "wrmse_sta": 0.5318551834711095
+    "total_emission_rel_err_max": 0.15947544172188105,
+    "total_emission_rel_err_signed": 0.15947544172188088,
+    "verifier_forward_wrmse_sat": 0.32332279640006184,
+    "verifier_forward_wrmse_sta": 0.5738978844482141,
+    "wrmse_sat": 0.36950390105937664,
+    "wrmse_sta": 0.6289730994666961
   }
 }

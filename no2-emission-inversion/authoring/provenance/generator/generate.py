@@ -26,6 +26,17 @@ def diurnal_factor(t_epoch):
     return DIURNAL[i0] * (1 - w) + DIURNAL[i1] * w
 
 
+def fit_error_model(diff, value):
+    """Split a residual population into a floor and a proportional component.
+
+    Least squares of diff**2 against [1, value**2], clipped to non-negative.
+    """
+    A = np.stack([np.ones_like(value), value ** 2], axis=1)
+    coef, *_ = np.linalg.lstsq(A, diff ** 2, rcond=None)
+    coef = np.clip(coef, 0.0, None)
+    return float(np.sqrt(coef[0])), float(np.sqrt(coef[1]))
+
+
 class Episode:
     def __init__(self, e, met, rng):
         self.e = e
@@ -33,8 +44,15 @@ class Episode:
         self.t_end = self.t0 + C.EPISODE_HOURS * 3600.0
         self.t_sat = self.t0 + rng.uniform(6.6, 7.9) * 3600.0
         self.regime = C.EPISODE_REGIME[e]
-        self.road_factor = float(np.round(rng.uniform(0.86, 1.14), 4))
-        self.fixed_factor = float(np.round(rng.uniform(0.90, 1.10), 4))
+        # Withheld episodes span a wider day-type range than the observed set,
+        # so the saturating chemistry has to be right and not merely calibrated
+        # over the observed concentration range.
+        if e in C.HELD_OUT_EPISODES:
+            self.road_factor = float(np.round(rng.uniform(0.72, 1.36), 4))
+            self.fixed_factor = float(np.round(rng.uniform(0.80, 1.22), 4))
+        else:
+            self.road_factor = float(np.round(rng.uniform(0.86, 1.14), 4))
+            self.fixed_factor = float(np.round(rng.uniform(0.90, 1.10), 4))
         # six hourly station averaging intervals over the analysis window
         a0 = self.t0 + C.SPINUP_HOURS * 3600.0
         self.station_intervals = [(a0 + k * 3600.0, a0 + (k + 1) * 3600.0)
@@ -58,14 +76,15 @@ def met_at_time(met, blmean, e, t, op):
     v = P.apply_bilinear(lerp(blmean[e, :, :, :, 1]), ix, iy, tx, ty)
     h = P.apply_bilinear(lerp(met["blh"][e]), ix, iy, tx, ty)
     f = P.apply_bilinear(lerp(met["f_no2"][e]), ix, iy, tx, ty)
-    return u, v, h, f
+    ph = P.apply_bilinear(lerp(met["photolysis"][e]), ix, iy, tx, ty)
+    return u, v, h, f, ph
 
 
 def run_episode(ep, met, blmean, grid, road, fixed, params, sat_geom, stations,
                 dt):
     """Integrate one episode and return the noise-free observation operators' output."""
     nx, ny, dx, gx, gy, gamma = grid
-    s, tau, a_sc, delta, bcoef = params
+    s, tau0, c_ref, a_sc, delta, bcoef, fixed_scale, zeta0 = params
     bg = P.background_field(bcoef, gx, gy)
     adv = P.Advector(nx, ny, dx, bg)
     op = interp_met_to_grid(met, blmean, ep.e, gx, gy)
@@ -86,18 +105,19 @@ def run_episode(ep, met, blmean, grid, road, fixed, params, sat_geom, stations,
     sat_done = False
     for n in range(nsteps):
         tm = t + 0.5 * dt
-        u, v, h, fno2 = met_at_time(met, blmean, ep.e, tm, op)
+        u, v, h, fno2, photo = met_at_time(met, blmean, ep.e, tm, op)
         ug, vg = P.corrected_grid_wind(u, v, a_sc, delta, gamma)
         ufx, vfy = P.face_velocities(ug, vg)
-        emis = ep.road_factor * diurnal_factor(tm) * emis_road + ep.fixed_factor * fixed
+        emis = (ep.road_factor * diurnal_factor(tm) * emis_road
+                + fixed_scale * ep.fixed_factor * fixed)
         c_prev = c
-        c = adv.step(c, ufx, vfy, emis, dt, tau)
+        c = adv.step(c, ufx, vfy, emis, dt, tau0, c_ref, photo)
 
         # satellite snapshot at the overpass time (linear in time within the step)
         if (not sat_done) and (t + dt >= ep.t_sat):
             w = (ep.t_sat - t) / dt
             c_sat = (1 - w) * c_prev + w * c
-            _, _, h_s, f_s = met_at_time(met, blmean, ep.e, ep.t_sat, op)
+            _, _, h_s, f_s, _ = met_at_time(met, blmean, ep.e, ep.t_sat, op)
             sat_value = sample_satellite(c_sat * f_s, sat_geom)
             sat_done = True
 
@@ -106,7 +126,7 @@ def run_episode(ep, met, blmean, grid, road, fixed, params, sat_geom, stations,
             if ta <= t + dt <= tb:
                 zeta = st_inlet / h[st_iy, st_ix]
                 val = (fno2[st_iy, st_ix] * c[st_iy, st_ix]
-                       * P.phi_shape(zeta) / h[st_iy, st_ix])
+                       * P.phi_shape(zeta, zeta0) / h[st_iy, st_ix])
                 st_sum[:, ki] += val
                 st_cnt[:, ki] += 1.0
         t += dt
@@ -183,7 +203,7 @@ def main():
         a1 = rng.uniform(0.05, 0.22, npix)
         # vertical sensitivity = integral of A(z) * g(z) dz over the layer
         zeta = np.linspace(0.0, 1.0, 201)
-        phi = P.phi_shape(zeta)
+        phi = P.phi_shape(zeta, C.TRUE_ZETA0)
         hbar = float(met["blh"][e].mean())
         A = a0[:, None] + a1[:, None] * (zeta[None, :] * hbar / 1000.0)
         m = np.trapezoid(A * phi[None, :], zeta, axis=1)
@@ -193,8 +213,9 @@ def main():
         geom_c.append(build_sat_geometry(sw, C.NX_C, C.NY_C, C.DX_COARSE, m))
         print(f"  episode {e}: {npix} footprints", flush=True)
 
-    true_params = (C.TRUE_SOURCE_SCALE, C.TRUE_LIFETIME_S, C.TRUE_WIND_SPEED_SCALE,
-                   C.TRUE_WIND_ROTATION_DEG, C.TRUE_BACKGROUND)
+    true_params = (C.TRUE_SOURCE_SCALE, C.TRUE_TAU0_S, C.TRUE_C_REF,
+                   C.TRUE_WIND_SPEED_SCALE, C.TRUE_WIND_ROTATION_DEG,
+                   C.TRUE_BACKGROUND, C.TRUE_FIXED_SCALE, C.TRUE_ZETA0)
 
     print("running truth on the 2 km grid ...", flush=True)
     truth_sat, truth_sta = [], []
@@ -215,11 +236,15 @@ def main():
         repr_sta.append(st)
 
     d_sat = np.concatenate([truth_sat[e] - repr_sat[e] for e in range(C.N_EPISODES)])
+    v_sat = np.concatenate([truth_sat[e] for e in range(C.N_EPISODES)])
     d_sta = np.concatenate([(truth_sta[e] - repr_sta[e]).ravel() for e in range(C.N_EPISODES)])
-    sigma_repr_sat = float(np.sqrt(np.mean(d_sat ** 2)))
-    sigma_repr_sta = float(np.sqrt(np.mean(d_sta ** 2)))
-    print(f"representation error: satellite {sigma_repr_sat:.4e} mol m-2, "
-          f"station {sigma_repr_sta:.4f} ug m-3", flush=True)
+    v_sta = np.concatenate([truth_sta[e].ravel() for e in range(C.N_EPISODES)])
+    sigma_repr_sat = fit_error_model(d_sat, v_sat)
+    sigma_repr_sta = fit_error_model(d_sta, v_sta)
+    print(f"representation error: satellite floor {sigma_repr_sat[0]:.4e} mol m-2 "
+          f"+ {100*sigma_repr_sat[1]:.2f} percent, station floor "
+          f"{sigma_repr_sta[0]:.4f} ug m-3 + {100*sigma_repr_sta[1]:.2f} percent",
+          flush=True)
 
     np.savez_compressed(
         os.path.join(prvd, "truth_state.npz"),

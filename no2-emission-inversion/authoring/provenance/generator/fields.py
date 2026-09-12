@@ -125,6 +125,7 @@ def build_meteorology(rng):
     vN = np.zeros_like(uE)
     blh = np.zeros((C.N_EPISODES, nt, C.NY_M, C.NX_M))
     fno2 = np.zeros_like(blh)
+    photo = np.zeros_like(blh)
 
     for e in range(C.N_EPISODES):
         reg = C.EPISODE_REGIME[e]
@@ -161,8 +162,24 @@ def build_meteorology(rng):
             blh[e, it] = (night + (base - night) * grow) * terr
             # NO2 / NOx partitioning: lower at midday, higher at night
             fno2[e, it] = np.clip(0.815 - 0.20 * grow + 0.03 * np.cos(4.0 * yt), 0.55, 0.90)
+            photo[e, it] = photolysis_proxy(met_times[e, it], yt)
     return dict(times=met_times, z_iface=z_iface, u_east=uE, v_north=vN,
-                blh=blh, f_no2=fno2, x=xm, y=ym)
+                blh=blh, f_no2=fno2, photolysis=photo, x=xm, y=ym)
+
+
+def photolysis_proxy(t_epoch, yt):
+    """Dimensionless photolysis proxy from solar geometry at 52 N, 10 E.
+
+    P = P_night + (1 - P_night) * max(0, cos(sza)) ** 0.75, with a weak
+    north-south gradient across the domain.
+    """
+    doy = (t_epoch % 31_556_952.0) / 86400.0
+    hour = (t_epoch % 86400.0) / 3600.0
+    dec = np.deg2rad(23.44) * np.sin(2 * np.pi * (doy - 81.0) / 365.24)
+    lat = np.deg2rad(52.0 + 0.75 * (yt - 0.5))
+    H = np.deg2rad(15.0 * (hour + 10.0 / 15.0 - 12.0))
+    cz = np.sin(lat) * np.sin(dec) + np.cos(lat) * np.cos(dec) * np.cos(H)
+    return C.P_NIGHT + (1.0 - C.P_NIGHT) * np.clip(cz, 0.0, None) ** 0.75
 
 
 def grid_convergence_field(nx, ny, dx):

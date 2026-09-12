@@ -9,81 +9,83 @@ Domain `earth-sciences` / field `atmospheric-sciences` / subcategory
 
 ## Difficulty
 
-An expert who already writes transport and retrieval code needs roughly a
-day: the work is a long chain of dependent modelling decisions, each stated in
-`/app/data/model_spec.md`, none of which is the default choice an agent reaches
-for, and every one of which must be right at the same time.
+An expert who already writes transport and retrieval code needs on the order of
+a day. The work is a long chain of dependent modelling decisions, each stated in
+`/app/data/model_spec.md`, plus one thing the specification deliberately does not
+state: which retrievals are fit to use.
 
-The chain is: decode packed satellite columns and apply the quality rule before
-screening, keeping valid negative retrievals; convert two emission fields that
-are published on different mass bases, NO2-equivalent for the road inventory and
-nitrogen for the fixed sources, each with its own molar mass; form the
-boundary-layer mean wind on the meteorological grid before interpolating it,
-not after; compose the unknown wind rotation with the spatially varying grid
-convergence in the right sense; integrate a conservative advection-diffusion
-equation with a single effective loss time, with the unknown inflow field used
-as both initial condition and inflow boundary value and zero diffusive flux
-across the boundary; average the model field over irregular quadrilateral
-footprints by area-weighted overlap and apply the per-pixel vertical
-sensitivity; and evaluate the surface operator through the prescribed
-normalised in-layer vertical shape.
+**The chemistry does not superpose.** The NOx sink saturates, because the
+oxidant that removes NOx is suppressed as NOx rises:
+`L(C) = C P / (tau_0 (1 + C / C_ref))`. Two consequences follow. The column from
+two sources together is not the sum of the columns each produces alone, so there
+is no basis decomposition and no inner linear least squares to hide behind:
+every one of the fifteen unknowns has to be carried through a nonlinear fit.
+And the inflow background lengthens the lifetime of the emitted plumes, so
+background, emissions and loss are entangled rather than merely correlated.
+`tau_0` and `C_ref` separate only because the data span a wide range of column
+amounts; a solver that does not check that will find a ridge instead of a
+minimum.
 
-What makes this unforgiving rather than merely long is that the twelve free
+**The quality flag is not an artefact detector.** A contiguous band of
+across-track positions develops a gain and offset error partway through the
+record, as real ultraviolet imagers do. It passes the quality screen, and the
+reported per-pixel uncertainty does not cover it. The specification says the
+flag is not exhaustive and that establishing which retrievals are fit to use is
+part of the analysis; it does not say which positions or from when. Fitting the
+accepted set as delivered gives a chi-square per observation near 1.5 rather
+than 1, which is the only signal that anything is wrong. Finding the band means
+fitting once, binning normalised residuals by across-track index and episode,
+and looking. Missing it biases the emission scales, the background and the wind
+correction together.
+
+**The withheld episodes are not a rerun of the observed ones.** They span a
+wider range of day-type emission factors than the twelve observed episodes, so a
+saturation column calibrated only over the observed concentration range
+extrapolates badly. This is where a fit that looks converged comes apart.
+
+**The remaining links still bite.** Two emission fields published on different
+mass bases, NO2-equivalent and nitrogen, each needing its own molar mass. A
+boundary-layer mean wind formed on the meteorological grid before interpolating,
+not after. An unknown rotation composed with the spatially varying grid
+convergence in the right sense. A conservative transport solve with the unknown
+inflow field as both initial condition and inflow boundary value. Area-weighted
+polygon footprint averaging with a per-pixel vertical sensitivity. A surface
+operator through a vertical profile whose shape parameter is itself unknown,
+which is what forces the column and surface data to be used together.
+
+What makes this unforgiving rather than merely long is that the fifteen free
 parameters absorb a broken link. Every candidate mistake was refitted end to end
 with that one link broken, then scored exactly as an agent would be; the table
-is in `authoring/evidence/EVIDENCE.md`. Dropping the wind correction still fits
-the training episodes at a chi-square per observation of 3.2, and skipping the
-quality screen fits at 11.2, yet both look like an inversion that converged,
-because the scale factors, the loss time and the background silently compensate.
-The compensation is regime-dependent, so it collapses on the six withheld
-episodes: held-out satellite error rises from 0.24 for the reference solution to
-1.15 without quality screening and 1.50 without the wind correction, against a
-frozen threshold of 0.53.
-
-Not every link is equally sharp, and the evidence says so. Dropping the diurnal
-emission modulation is caught by the consistency and station gates. Using the
-NO2 molar mass for the nitrogen-basis field survives the prediction gates and is
-caught by the exported-inventory gate instead. Sampling footprints at the
-nearest cell centre instead of by area overlap is caught only by the
-light-and-variable wind regime, where gradients are sharpest. Ignoring the grid
-convergence angle, which spans about six degrees, is largely absorbed by the
-free rotation parameter and passes. Clipping negative retrievals to zero turns
-out to be harmless at this signal level.
-
-The inference is a twelve-parameter joint estimation with real structural
-trade-offs: emission amplitude against effective loss time, wind speed against
-loss time, broad sources against inflow background. They separate only when
-several distinct wind regimes are used together. Individual region factors
-remain more weakly constrained than their domain total, and the total is what
-is graded.
+is in `authoring/evidence/EVIDENCE.md`.
 
 **The data are synthetic**, and the instruction says so. They were produced by
 the seeded generator in `authoring/provenance/generator/`, which is implemented
 separately from the reference solution, integrates on a 2 km grid while the
 published inference grid is 4 km, and was run once with latent parameters fixed
 in advance. The representation error between the two grids is measured and
-published in `data_manifest.json`, so a fair solution is never penalised for
-discretisation.
+published in `data_manifest.json` as a floor and a relative coefficient, so a
+fair solution is never penalised for discretisation.
 
 ## Reference solution
 
 `solution/no2_inversion.py`, driven by `solution/solve.sh`.
 
-For a fixed loss time and fixed wind corrections the stated transport model is
-linear in the six road scale factors and the three background coefficients. The
-solution exploits that: it integrates ten basis states per episode, one for the
-prescribed non-road sources, six for the road groups and three for a corner
-parametrisation of the background field, assembles the design matrix against the
-accepted observations weighted by the total error, and solves the inner problem
-with a bounded linear least squares. Only three nonlinear parameters are
-searched, with a coarse grid on one episode per wind regime, Nelder-Mead on that
-subset, and a final Nelder-Mead pass over all twelve training episodes. This is
-one valid route, not a required one; the instruction leaves the numerical method
-open.
+The saturating sink removes any basis decomposition, so all fifteen unknowns are
+fitted jointly by bounded nonlinear least squares with a finite-difference
+Jacobian, with the forward runs for the twelve observed episodes distributed
+over the available cores. The instrument artefact is found the way an analyst
+finds it, and without reading the generator: fit once over the whole accepted
+set, bin the normalised residuals by across-track index within each episode,
+flag the positions carrying a significant systematic offset, drop them and fit
+again. A restart from a distant point checks that the optimiser has not stopped
+in a local minimum. This is one valid route, not a required one; the instruction
+leaves the numerical method open.
 
 Transport uses a flux-form finite-volume scheme with a van Leer limited
 reconstruction at a 60 s time step, first order at boundary faces, the
 background field in the ghost cells and zero diffusive flux across the boundary.
+The loss coefficient is evaluated at the current column and applied as an
+exponential update over the step.
 Fitted parameters are then propagated through the six withheld episodes to
 produce the graded predictions. The solution never reads the generator, its seed
 or the sealed evaluation values.
@@ -104,10 +106,10 @@ reward 1 only if every gate passes.
    everywhere.
 3. **Internal consistency of the inventory.** The exported `corrected_road_flux`
    and `total_source_flux` must equal the supplied priors converted by the
-   verifier's own unit handling and scaled by the reported factors, and the
-   reported per-episode totals must follow from those same factors and the
-   published time modulation. This is where a wrong emission mass basis is
-   caught.
+   verifier's own unit handling and scaled by the reported road factors and
+   `fixed_source_scale`, and the reported per-episode totals must follow from
+   those same factors and the published time modulation. This is where a wrong
+   emission mass basis is caught.
 4. **Prediction consistency.** `tests/verifier_forward.py` re-runs the forward
    model from the submitted parameters with a different discretisation, Strang
    directional splitting instead of an unsplit update, and requires the
@@ -116,13 +118,18 @@ reward 1 only if every gate passes.
    withheld satellite and surface measurements, each below a frozen threshold,
    and each of the three wind regimes below its own threshold so that a good
    average cannot conceal a failed regime.
-6. **Identifiable recovery.** The domain-integrated road NOx emission rate is
-   compared with the value used to generate the data. Individual region factors
-   are not graded, because the identifiability study in
-   `authoring/evidence/` shows the public data do not constrain all six
-   separately.
+There is deliberately no sixth gate comparing inferred emissions with the
+truth. The identifiability study in `authoring/evidence/EVIDENCE.md` shows the
+public data do not constrain the absolute road total or the individual
+chemistry parameters: emission amplitude, reference loss time and saturation
+column trade against one another with almost no change in the fit, while the
+wind correction and the vertical shape parameter are recovered to a fraction of
+a percent. Grading a quantity the data do not determine would fail correct
+work, so prediction agreement carries the evidence.
 
 Ground truth is the generator's own withheld output, baked into the verifier
 image. Nothing in `environment/` references the solution or the tests, and the
-sealed values never appear in the agent's container. Thresholds were frozen from
-measured reference performance and documented baselines before any agent run.
+sealed values never appear in the agent's container. Thresholds are a fixed margin above measured reference performance, 1.75 times
+on satellite and 1.45 times on station, and were then validated against the
+broken variants: each of the four that must fail is rejected by at least one
+gate. They were frozen before any agent run.

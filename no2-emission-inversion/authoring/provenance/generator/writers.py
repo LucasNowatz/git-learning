@@ -1,5 +1,6 @@
 """Serialise the agent-visible dataset and the sealed evaluation set."""
 import json, os, hashlib
+from datetime import datetime, timezone
 import numpy as np
 from netCDF4 import Dataset
 import config as C
@@ -119,7 +120,6 @@ def write_meteorology(path, met, episodes):
         ds.schema_version = "1.0"
         ds.time_convention = "seconds since 1970-01-01T00:00:00Z (UTC)"
         ds.horizontal_diffusivity_m2_s = C.K_DIFF
-        ds.vertical_shape_zeta0 = C.ZETA0
         ds.comment = ("Winds are true east/north components. The transport wind "
                       "is the layer-thickness weighted mean over the levels "
                       "inside the boundary layer, formed on this grid at these "
@@ -155,6 +155,11 @@ def write_meteorology(path, met, episodes):
                                zlib=True, complevel=4)
         vv[:] = met["f_no2"].astype(np.float32); vv.units = "1"
         vv.long_name = "prescribed NO2 / NOx molar fraction"
+        vv = ds.createVariable("photolysis_factor", "f4",
+                               ("episode", "time", "ym", "xm"),
+                               zlib=True, complevel=4)
+        vv[:] = met["photolysis"].astype(np.float32); vv.units = "1"
+        vv.long_name = "prescribed photolysis proxy driving the NOx sink"
         ve = ds.createVariable("episode_id", "i4", ("episode",))
         ve[:] = np.arange(C.N_EPISODES)
         vs = ds.createVariable("episode_start", "f8", ("episode",))
@@ -319,6 +324,8 @@ def write_all(root, S):
     stations = S["stations"]
     held = list(C.HELD_OUT_EPISODES)
     train = [e for e in range(C.N_EPISODES) if e not in held]
+    anomaly_t0 = datetime.strptime(C.ANOMALY_FROM_EPISODE_TIME, "%Y-%m-%dT%H:%M:%SZ") \
+        .replace(tzinfo=timezone.utc).timestamp()
 
     masks = (S["road_c"] > 1e-13)
     write_domain(os.path.join(envd, "domain.nc"), S["gx_c"], S["gy_c"], S["gam_c"], masks)
@@ -329,7 +336,8 @@ def write_all(root, S):
     sat_sigma, sat_report, sat_qa = {}, {}, {}
     for e in range(C.N_EPISODES):
         n = len(S["truth_sat"][e])
-        sig = rng.uniform(0.55e-5, 1.15e-5, n)
+        floor = rng.uniform(*C.SAT_SIGMA_FLOOR, n)
+        sig = np.hypot(floor, C.SAT_SIGMA_REL * np.abs(S["truth_sat"][e]))
         qa = np.clip(rng.beta(7.0, 1.0, n) * 1.02, 0.0, 1.0)
         cloudy = rng.random(n) < 0.16
         qa[cloudy] = rng.uniform(0.05, 0.72, cloudy.sum())
@@ -338,13 +346,23 @@ def write_all(root, S):
         val = S["truth_sat"][e] + rng.normal(0.0, sig)
         # cloud-affected retrievals are biased and noisier; the QA rule removes them
         val[cloudy] += rng.normal(6.0e-5, 4.0e-5, cloudy.sum())
+        # Across-track row anomaly: a contiguous band of ground pixels develops
+        # a gain and offset error partway through the record.  The quality flag
+        # does not flag it and the reported uncertainty does not cover it.
+        gp = S["swaths"][e]["ground_pixel"]
+        lo, hi = C.ANOMALY_GROUND_PIXEL
+        if episodes[e].t0 >= anomaly_t0:
+            rows = (gp >= lo) & (gp <= hi)
+            val[rows] = val[rows] * C.ANOMALY_GAIN + C.ANOMALY_OFFSET
+            val[rows] += rng.normal(0.0, sig[rows] * (C.ANOMALY_NOISE_INFLATION - 1.0))
         sat_sigma[e], sat_report[e], sat_qa[e] = sig, val, qa
 
     sta_sigma, sta_report = {}, {}
     for e in range(C.N_EPISODES):
         base = np.array([st["sigma_ug_m3"] for st in stations])[:, None]
-        sig = np.repeat(base, S["truth_sta"][e].shape[1], axis=1) \
+        floor = np.repeat(base, S["truth_sta"][e].shape[1], axis=1) \
             * rng.uniform(0.85, 1.15, S["truth_sta"][e].shape)
+        sig = np.hypot(floor, C.STA_SIGMA_REL * np.abs(S["truth_sta"][e]))
         sta_sigma[e] = sig
         sta_report[e] = S["truth_sta"][e] + rng.normal(0.0, sig)
 
@@ -393,9 +411,13 @@ def write_all(root, S):
         sta_obs_id=np.array(sta_ids), sta_truth=np.array(sta_truth),
         sta_sigma_meas=np.array(sta_sig), sta_regime=np.array(sta_reg),
         sta_episode=np.array(sta_ep, dtype=int),
-        sigma_repr_sat=S["sigma_repr_sat"], sigma_repr_sta=S["sigma_repr_sta"],
+        repr_sat_floor=S["sigma_repr_sat"][0], repr_sat_rel=S["sigma_repr_sat"][1],
+        repr_sta_floor=S["sigma_repr_sta"][0], repr_sta_rel=S["sigma_repr_sta"][1],
         true_source_scale=C.TRUE_SOURCE_SCALE,
-        true_lifetime_s=C.TRUE_LIFETIME_S,
+        true_tau0_s=C.TRUE_TAU0_S,
+        true_c_ref=C.TRUE_C_REF,
+        true_fixed_scale=C.TRUE_FIXED_SCALE,
+        true_zeta0=C.TRUE_ZETA0,
         true_wind_speed_scale=C.TRUE_WIND_SPEED_SCALE,
         true_wind_rotation_deg=C.TRUE_WIND_ROTATION_DEG,
         true_background=C.TRUE_BACKGROUND,
@@ -424,14 +446,19 @@ def write_all(root, S):
         training_episodes=train, query_episodes=held,
         constants=dict(molar_mass_no2_kg_per_mol=C.M_NO2,
                        molar_mass_n_kg_per_mol=C.M_N,
-                       horizontal_diffusivity_m2_s=C.K_DIFF,
-                       vertical_shape_zeta0=C.ZETA0),
+                       horizontal_diffusivity_m2_s=C.K_DIFF),
         representation_error=dict(
-            satellite_mol_m2=S["sigma_repr_sat"],
-            station_ug_m3=S["sigma_repr_sta"],
-            method=("root-mean-square difference between the generating model "
-                    "and the same physical state evaluated on the 4 km "
-                    "inference grid, over all episodes and both instruments")),
+            model=("sigma_representation**2 = floor**2 + (relative * value)**2, "
+                   "where value is the observed column or concentration when "
+                   "fitting and the withheld value when grading"),
+            satellite_floor_mol_m2=S["sigma_repr_sat"][0],
+            satellite_relative=S["sigma_repr_sat"][1],
+            station_floor_ug_m3=S["sigma_repr_sta"][0],
+            station_relative=S["sigma_repr_sta"][1],
+            method=("least-squares fit of the squared difference between the "
+                    "generating model and the same physical state evaluated on "
+                    "the 4 km inference grid, against a constant plus a term "
+                    "proportional to the squared signal, over all episodes")),
         parameter_bounds={k: list(v) for k, v in C.BOUNDS.items()},
         file_count=len(files),
         files=files,

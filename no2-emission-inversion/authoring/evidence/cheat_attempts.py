@@ -10,7 +10,7 @@ import numpy as np
 from netCDF4 import Dataset
 
 ROOT = "/home/user/git-learning/no2-emission-inversion"
-GOOD = "/tmp/oracle_out"
+GOOD = "/tmp/oracle_out2"
 APP = "/app"
 DATA = f"{ROOT}/environment/data"
 
@@ -109,9 +109,25 @@ def scales_at_bound(r):
 
 
 def garbage_parameters(r):
-    r["effective_lifetime_s"] = 9000.0
+    r["reference_loss_time_s"] = 9000.0
+    r["loss_saturation_column"] = 2.5e-4
     r["wind_speed_scale"] = 0.9
     r["wind_rotation_deg"] = 4.0
+    return r
+
+
+def fixed_scale_unity(r):
+    r["fixed_source_scale"] = 1.0
+    return r
+
+
+def zeta0_default(r):
+    r["vertical_shape_zeta0"] = 0.35
+    return r
+
+
+def loss_time_out_of_range(r):
+    r["reference_loss_time_s"] = 900.0
     return r
 
 
@@ -169,6 +185,9 @@ ATTEMPTS = [
     ("posterior_on_wrong_mass_basis", dict(posterior=wrong_mass_basis_posterior)),
     ("totals_missing_diurnal_factor", dict(result=totals_without_diurnal)),
     ("emission_scale_doubled", dict(result=emission_scale_doubled)),
+    ("fixed_scale_reported_as_one", dict(result=fixed_scale_unity)),
+    ("vertical_shape_reported_as_default", dict(result=zeta0_default)),
+    ("loss_time_outside_bounds", dict(result=loss_time_out_of_range)),
 ]
 
 if __name__ == "__main__":

@@ -11,6 +11,11 @@ QSAT, QSTA = VF.read_queries(f"{ROOT}/tests/inputs")
 NX, NY = 60, 45
 
 
+def sigma(meas, value, floor, rel):
+    return np.sqrt(np.asarray(meas) ** 2 + float(floor) ** 2
+                   + (float(rel) * np.abs(np.asarray(value))) ** 2)
+
+
 def wrmse(p, t, s):
     return float(np.sqrt(np.mean(((p - t) / s) ** 2)))
 
@@ -20,21 +25,27 @@ def score(app="/app", recompute=True, label=""):
     rid = np.asarray(r["region_ids"], int)
     order = np.argsort(rid)
     P = dict(emission_scale=np.asarray(r["emission_scale"], float)[order],
-             effective_lifetime_s=float(r["effective_lifetime_s"]),
+             reference_loss_time_s=float(r["reference_loss_time_s"]),
+             loss_saturation_column=float(r["loss_saturation_column"]),
              wind_speed_scale=float(r["wind_speed_scale"]),
              wind_rotation_deg=float(r["wind_rotation_deg"]),
-             background_coefficients=np.asarray(r["background_coefficients"], float))
+             background_coefficients=np.asarray(r["background_coefficients"], float),
+             fixed_source_scale=float(r["fixed_source_scale"]),
+             vertical_shape_zeta0=float(r["vertical_shape_zeta0"]))
     got = {}
     with open(f"{app}/predicted_observations.csv", newline="") as fh:
         for row in csv.DictReader(fh):
             got[row["obs_id"].strip()] = float(row["predicted_value"])
     ps = np.array([got[o] for o in QSAT["obs_id"]])
     pt = np.array([got[o] for o in QSTA["obs_id"]])
-    ss = np.hypot(EV["sat_sigma_meas"], float(EV["sigma_repr_sat"]))
-    st = np.hypot(EV["sta_sigma_meas"], float(EV["sigma_repr_sta"]))
+    ss = sigma(EV["sat_sigma_meas"], EV["sat_truth"], EV["repr_sat_floor"], EV["repr_sat_rel"])
+    st = sigma(EV["sta_sigma_meas"], EV["sta_truth"], EV["repr_sta_floor"], EV["repr_sta_rel"])
     out = dict(label=label,
                params=dict(emission_scale=P["emission_scale"].round(5).tolist(),
-                           lifetime_h=round(P["effective_lifetime_s"] / 3600, 4),
+                           tau0_h=round(P["reference_loss_time_s"] / 3600, 4),
+                           c_ref=P["loss_saturation_column"],
+                           fixed_scale=round(P["fixed_source_scale"], 5),
+                           zeta0=round(P["vertical_shape_zeta0"], 5),
                            wind_speed_scale=round(P["wind_speed_scale"], 5),
                            wind_rotation_deg=round(P["wind_rotation_deg"], 4),
                            background=P["background_coefficients"].tolist()),
@@ -58,10 +69,17 @@ def score(app="/app", recompute=True, label=""):
     out["total_emission_rel_err_signed"] = float(
         (np.asarray(P["emission_scale"]) * base).sum()
         / (EV["true_source_scale"] * base).sum() - 1.0)
+    out["param_err"] = dict(
+        tau0=round(P["reference_loss_time_s"] / float(EV["true_tau0_s"]) - 1, 4),
+        c_ref=round(P["loss_saturation_column"] / float(EV["true_c_ref"]) - 1, 4),
+        fixed=round(P["fixed_source_scale"] / float(EV["true_fixed_scale"]) - 1, 4),
+        zeta0=round(P["vertical_shape_zeta0"] / float(EV["true_zeta0"]) - 1, 4),
+        rot=round(P["wind_rotation_deg"] - float(EV["true_wind_rotation_deg"]), 3),
+        wind=round(P["wind_speed_scale"] / float(EV["true_wind_speed_scale"]) - 1, 4))
     if recompute:
         rs, rt = VF.recompute_all(I, QSAT, QSTA, P, NX, NY)
-        qs = np.hypot(QSAT["sigma"], float(EV["sigma_repr_sat"]))
-        qt = np.hypot(QSTA["sigma"], float(EV["sigma_repr_sta"]))
+        qs = sigma(QSAT["sigma"], EV["sat_truth"], EV["repr_sat_floor"], EV["repr_sat_rel"])
+        qt = sigma(QSTA["sigma"], EV["sta_truth"], EV["repr_sta_floor"], EV["repr_sta_rel"])
         out["consistency_sat"] = float(np.sqrt(np.mean(((ps - rs) / qs) ** 2)))
         out["consistency_sta"] = float(np.sqrt(np.mean(((pt - rt) / qt) ** 2)))
         out["verifier_forward_wrmse_sat"] = wrmse(rs, EV["sat_truth"], ss)

@@ -6,7 +6,7 @@ records from twelve observed episodes, the prior road NOx inventory, the
 meteorology, and the geometry and timing of six further episodes whose
 measurements are withheld.
 
-Infer the twelve unknown quantities listed below from the observed episodes,
+Infer the fifteen unknown quantities listed below from the observed episodes,
 and predict the withheld observations.
 
 `/app/data/model_spec.md` defines the physical model, the unit system, the wind
@@ -18,18 +18,23 @@ specification constrains the physics, not the discretisation.
 
 ## What is unknown
 
-Twelve quantities, shared across every episode:
+Fifteen quantities, shared across every episode:
 
 * six non-negative road emission scale factors, one per source group, within
   0.30 to 2.50;
-* one effective NOx loss time, between 3600 s and 28800 s;
+* the low-NOx reference loss time of the saturating chemical sink, between
+  1800 s and 28800 s;
+* the saturation column of that sink, between 1.0e-5 and 1.0e-3 mol m-2;
 * one wind speed multiplier, between 0.70 and 1.30;
 * one wind direction correction, between -20 and +20 degrees;
 * three coefficients of the affine inflow background field, which must keep
-  that field non-negative everywhere in the domain.
+  that field non-negative everywhere in the domain;
+* one scale factor on the non-road source inventory, between 0.40 and 2.20;
+* the shape parameter of the normalised vertical profile, between 0.12 and
+  0.80.
 
-The prescribed non-road sources are not adjusted. The spatial pattern of each
-road source group is exact; only its amplitude is unknown.
+The spatial pattern of each road source group and of the non-road field is
+exact; only the amplitudes are unknown.
 
 ## What you must deliver
 
@@ -44,11 +49,15 @@ The inferred parameter set:
 | `schema_version` | string |
 | `region_ids` | the six region identifiers from `domain.nc` |
 | `emission_scale` | six scale factors, ordered to match `region_ids` |
-| `effective_lifetime_s` | seconds |
+| `reference_loss_time_s` | seconds |
+| `loss_saturation_column` | `mol m-2` |
+| `loss_saturation_units` | string |
 | `wind_speed_scale` | dimensionless |
 | `wind_rotation_deg` | degrees, sign as defined in the specification |
 | `background_coefficients` | `[b0, bx, by]` in `mol m-2` |
 | `background_units` | string |
+| `fixed_source_scale` | dimensionless |
+| `vertical_shape_zeta0` | dimensionless |
 | `integrated_road_mol_s` | mapping from episode id (`"0"` to `"17"`) to the domain-integrated corrected road NOx emission rate at that episode's reference time, in `mol s-1` |
 
 The episode reference time is the `overpass_time` of `meteorology.nc`, so the
@@ -63,7 +72,8 @@ and `total_source_flux` with dimensions `(y, x)`, both in `mol m-2 s-1` and
 both at the base period, that is with all time factors set to one.
 `corrected_road_flux` is the supplied prior converted into those units and
 multiplied by your scale factor for that region; `total_source_flux` adds the
-prescribed non-road sources to their sum. The file must declare its units.
+non-road field, converted and multiplied by your `fixed_source_scale`, to their
+sum. The file must declare its units.
 
 ### `/app/predicted_observations.csv`
 
